@@ -2,3 +2,6 @@ backup/
 .idea/
 **/.env
 **/node_modules/
+MyApp/.tmp/
+MyApp/android/.cxx/
+backend/uploads/_smoke.txt
