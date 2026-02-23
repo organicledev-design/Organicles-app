@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  items           String
+  shippingAddress String
+  totalAmount     Float
+  status          String
+  paymentMethod   String?
+  createdAt       DateTime @default(now())
+
+  payments Payment[]
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  orderId        String
+  txnRef         String   @unique
+  method         String
+  amount         Float
+  status         String
+  walletPhone    String?
+  walletProvider String?
+  createdAt      DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+
+model Review {
+  id          String   @id @default(cuid())
+  userName    String
+  rating      Int
+  comment     String
+  date        String
+  avatar      String?
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String
+  website   String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model HeroBanner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  title     String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  fullName  String
+  dob       String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Product {
+  id                 String   @id @default(cuid())
+  name               String
+  description        String
+  price              Float
+  originalPrice      Float?
+  discountPercentage Int?
+  images             Json
+  category           String
+  featured           Boolean  @default(false)
+  bestSeller         Boolean  @default(false)
+  bestSellerOrder    Int?     // add this
+  stock              Int      @default(0)
+  tags               Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+

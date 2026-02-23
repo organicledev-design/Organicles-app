@@ -1,7 +1,4 @@
-node_modules
-# Keep environment variables out of version control
-.env
-
-/src/generated/prisma
-*.db
-*.db-journal
+backup/
+.idea/
+**/.env
+**/node_modules/

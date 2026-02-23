@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: backend-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SQLITE_DB_PATH
+        value: /var/data/dev.db
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
+    disks:
+      - name: backend-data
+        mountPath: /var/data
+        sizeGB: 1
