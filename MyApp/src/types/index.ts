@@ -4,8 +4,6 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  originalPrice?: number;
-  discountPercentage?: number;
   images: Array<string | number>;
   category: string;
   featured: boolean;

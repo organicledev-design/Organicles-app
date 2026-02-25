@@ -12,11 +12,25 @@ const parseJsonField = (value, fallback) => {
   return value;
 };
 
-const normalizeProduct = (product) => ({
-  ...product,
-  images: parseJsonField(product.images, []),
-  tags: parseJsonField(product.tags, []),
-});
+const buildAssetUrl = (req, rawUrl) => {
+  if (typeof rawUrl !== "string" || rawUrl.length === 0) return rawUrl;
+  const match = rawUrl.match(/\/uploads\/.+$/);
+  if (!match) return rawUrl;
+  return `${req.protocol}://${req.get("host")}${match[0]}`;
+};
+
+const normalizeProduct = (req, product) => {
+  const images = parseJsonField(product.images, []);
+  const normalizedImages = Array.isArray(images)
+    ? images.map((url) => buildAssetUrl(req, url))
+    : [];
+
+  return {
+    ...product,
+    images: normalizedImages,
+    tags: parseJsonField(product.tags, []),
+  };
+};
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -27,7 +41,7 @@ exports.getAllProducts = async (req, res) => {
     res.status(200).json({
       success: true,
       count: products.length,
-      products: products.map(normalizeProduct),
+      products: products.map((p) => normalizeProduct(req, p)),
     });
   } catch (error) {
     res.status(500).json({
@@ -55,7 +69,7 @@ exports.getProductById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      product: normalizeProduct(product),
+      product: normalizeProduct(req, product),
     });
   } catch (error) {
     res.status(500).json({

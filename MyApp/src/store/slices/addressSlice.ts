@@ -7,21 +7,7 @@ interface AddressState {
 }
 
 const initialState: AddressState = {
-  addresses: [
-    // Sample saved address for demo
-    {
-      id: '1',
-      fullName: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+92 300 1234567',
-      addressLine1: 'House 123, Street 45',
-      addressLine2: 'F-7 Markaz',
-      city: 'Islamabad',
-      state: 'Islamabad Capital Territory',
-      zipCode: '44000',
-      isDefault: true,
-    },
-  ],
+  addresses: [],
   selectedAddress: null,
 };
 
@@ -29,18 +15,23 @@ const addressSlice = createSlice({
   name: 'address',
   initialState,
   reducers: {
-    addAddress: (state, action: PayloadAction<Address>) => {
-      const newAddress = action.payload;
-      
-      // If this is set as default, unset all others
-      if (newAddress.isDefault) {
-        state.addresses.forEach(addr => {
-          addr.isDefault = false;
-        });
-      }
-      
-      state.addresses.push(newAddress);
+    hydrateAddresses: (
+      state,
+      action: PayloadAction<{ addresses: Address[]; selectedAddressId: string | null }>
+    ) => {
+      state.addresses = action.payload.addresses || [];
+      state.selectedAddress =
+        state.addresses.find((a) => a.id === action.payload.selectedAddressId) || null;
     },
+    addAddress: (state, action: PayloadAction<Address>) => {
+  const newAddress = action.payload;
+  if (newAddress.isDefault) {
+    state.addresses.forEach((addr) => {
+      addr.isDefault = false;
+    });
+  }
+  state.addresses.push(newAddress);
+},
     
     updateAddress: (state, action: PayloadAction<Address>) => {
       const updatedAddress = action.payload;
@@ -78,6 +69,7 @@ const addressSlice = createSlice({
 });
 
 export const {
+  hydrateAddresses,
   addAddress,
   updateAddress,
   deleteAddress,

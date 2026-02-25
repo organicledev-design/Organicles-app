@@ -76,8 +76,6 @@ const ProductDetailScreen = () => {
     );
   }
 
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
-
   const handleAddToCart = () => {
     if (product.stock === 0) {
       Alert.alert('Out of Stock', 'This product is currently unavailable.');
@@ -135,14 +133,6 @@ const ProductDetailScreen = () => {
             resizeMode="cover"
           />
           
-          {hasDiscount && (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>
-                {product.discountPercentage}% OFF
-              </Text>
-            </View>
-          )}
-          
           {product.bestSeller && (
             <View style={styles.bestSellerBadge}>
               <Text style={styles.bestSellerText}>⭐ Best Seller</Text>
@@ -180,11 +170,6 @@ const ProductDetailScreen = () => {
           
           <View style={styles.priceContainer}>
             <Text style={styles.price}>{formatCurrency(product.price)}</Text>
-            {hasDiscount && (
-              <Text style={styles.originalPrice}>
-                {formatCurrency(product.originalPrice!)}
-              </Text>
-            )}
           </View>
 
           {product.tags && (
@@ -282,20 +267,6 @@ const styles = StyleSheet.create({
     height: width,
     backgroundColor: COLORS.secondaryLight,
   },
-  discountBadge: {
-    position: 'absolute',
-    top: SPACING.md,
-    right: SPACING.md,
-    backgroundColor: COLORS.error,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  discountText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.bold,
-  },
   bestSellerBadge: {
     position: 'absolute',
     top: SPACING.md,
@@ -349,11 +320,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xxl,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.primary,
-  },
-  originalPrice: {
-    fontSize: FONT_SIZES.lg,
-    color: COLORS.textLight,
-    textDecorationLine: 'line-through',
   },
   tagsContainer: {
     flexDirection: 'row',

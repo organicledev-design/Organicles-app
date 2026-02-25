@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+﻿const { PrismaClient } = require("@prisma/client");
 const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
@@ -14,7 +14,7 @@ const ASSET_BASE_URL = process.env.ASSET_BASE_URL || "http://10.0.2.2:5000";
 const uploadUrl = (filename) => `${ASSET_BASE_URL}/uploads/${filename}`;
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log("ðŸŒ± Seeding database...");
 
   // Reset content tables for deterministic local seeds
   await prisma.product.deleteMany();
@@ -26,9 +26,7 @@ async function main() {
       {
         name: "Black Pepper",
         description: "Pure black pepper for daily cooking.",
-        price: 1200,
-        originalPrice: 1500,
-        discountPercentage: 20,
+        price: 1500,
         images: JSON.stringify([uploadUrl("1770968814733-black-pepper.jpg")]),
         category: "Spices",
         featured: true,
@@ -39,9 +37,7 @@ async function main() {
       {
         name: "Brown Sugar",
         description: "Natural brown sugar with rich flavor.",
-        price: 950,
-        originalPrice: 1200,
-        discountPercentage: 21,
+        price: 1200,
         images: JSON.stringify([uploadUrl("1770968814757-brown-sugar.jpg")]),
         category: "Sweeteners",
         featured: false,
@@ -52,9 +48,7 @@ async function main() {
       {
         name: "Cardamom",
         description: "Premium cardamom pods.",
-        price: 1800,
-        originalPrice: 2200,
-        discountPercentage: 18,
+        price: 2200,
         images: JSON.stringify([uploadUrl("1770968814776-cardamom.jpg")]),
         category: "Spices",
         featured: true,
@@ -65,9 +59,7 @@ async function main() {
       {
         name: "Chia Seed",
         description: "High-fiber chia seeds for daily nutrition.",
-        price: 1100,
-        originalPrice: 1400,
-        discountPercentage: 21,
+        price: 1400,
         images: JSON.stringify([uploadUrl("1770968814794-chia-seed.jpg")]),
         category: "Seeds",
         featured: false,
@@ -78,9 +70,7 @@ async function main() {
       {
         name: "Cinnamon",
         description: "Aromatic cinnamon for tea and cooking.",
-        price: 1300,
-        originalPrice: 1650,
-        discountPercentage: 21,
+        price: 1650,
         images: JSON.stringify([uploadUrl("1770968814811-cinnamon.jpg")]),
         category: "Spices",
         featured: false,
@@ -91,9 +81,7 @@ async function main() {
       {
         name: "Clove",
         description: "Whole cloves with strong natural aroma.",
-        price: 1450,
-        originalPrice: 1800,
-        discountPercentage: 19,
+        price: 1800,
         images: JSON.stringify([uploadUrl("1770968814829-clove.jpg")]),
         category: "Spices",
         featured: false,
@@ -104,9 +92,7 @@ async function main() {
       {
         name: "Coconut Oil",
         description: "Cold-pressed coconut oil for cooking and wellness.",
-        price: 1900,
-        originalPrice: 2300,
-        discountPercentage: 17,
+        price: 2300,
         images: JSON.stringify([uploadUrl("1770968814845-coconut-oil.jpg")]),
         category: "Oils",
         featured: true,
@@ -117,9 +103,7 @@ async function main() {
       {
         name: "Honey",
         description: "Raw honey sourced from trusted farms.",
-        price: 1600,
-        originalPrice: 2000,
-        discountPercentage: 20,
+        price: 2000,
         images: JSON.stringify([uploadUrl("1770968814873-honey.jpg")]),
         category: "Sweeteners",
         featured: true,
@@ -130,9 +114,7 @@ async function main() {
       {
         name: "Methi Dana",
         description: "Fresh fenugreek seeds for daily health.",
-        price: 700,
-        originalPrice: 900,
-        discountPercentage: 22,
+        price: 900,
         images: JSON.stringify([uploadUrl("1770968814890-methi-dana.jpg")]),
         category: "Seeds",
         featured: false,
@@ -143,9 +125,7 @@ async function main() {
       {
         name: "Moringa Powder",
         description: "Premium moringa leaf powder",
-        price: 900,
-        originalPrice: 1200,
-        discountPercentage: 25,
+        price: 1200,
         images: JSON.stringify([uploadUrl("1770968814906-moringa.jpg")]),
         category: "Supplements",
         featured: false,
@@ -156,9 +136,7 @@ async function main() {
       {
         name: "Olive Oil",
         description: "Extra virgin olive oil for healthy meals.",
-        price: 2400,
-        originalPrice: 2900,
-        discountPercentage: 17,
+        price: 2900,
         images: JSON.stringify([uploadUrl("1770968814923-olive-oil-2.jpg")]),
         category: "Oils",
         featured: true,
@@ -169,9 +147,7 @@ async function main() {
       {
         name: "Pink Salt",
         description: "Himalayan pink salt for mineral-rich seasoning.",
-        price: 850,
-        originalPrice: 1050,
-        discountPercentage: 19,
+        price: 1050,
         images: JSON.stringify([uploadUrl("1770968814939-pink-salt.jpg")]),
         category: "Spices",
         featured: false,
@@ -182,9 +158,7 @@ async function main() {
       {
         name: "Shilajit",
         description: "Pure shilajit resin for vitality support.",
-        price: 3200,
-        originalPrice: 4000,
-        discountPercentage: 20,
+        price: 4000,
         images: JSON.stringify([uploadUrl("1770968814956-shilajit.jpg")]),
         category: "Supplements",
         featured: true,
@@ -195,9 +169,7 @@ async function main() {
       {
         name: "Spices Opt. 2",
         description: "Balanced spice blend for everyday use.",
-        price: 1000,
-        originalPrice: 1300,
-        discountPercentage: 23,
+        price: 1300,
         images: JSON.stringify([uploadUrl("1770968814977-spices-opt.-2.jpg")]),
         category: "Spices",
         featured: false,
@@ -208,9 +180,7 @@ async function main() {
       {
         name: "Turmeric",
         description: "Pure turmeric powder with rich color.",
-        price: 950,
-        originalPrice: 1200,
-        discountPercentage: 21,
+        price: 1200,
         images: JSON.stringify([uploadUrl("1770968814994-turmeric.jpg")]),
         category: "Spices",
         featured: false,
@@ -221,9 +191,7 @@ async function main() {
       {
         name: "Desi Ghee",
         description: "Traditional desi ghee made from pure ingredients.",
-        price: 4250,
-        originalPrice: 5500,
-        discountPercentage: 23,
+        price: 5500,
         images: JSON.stringify([uploadUrl("1770969560167-desi-ghee.jpg")]),
         category: "Breakfast",
         featured: true,
@@ -236,9 +204,7 @@ async function main() {
       {
         name: "Zero Pain Oil",
         description: "Natural massage oil for muscle and joint support.",
-        price: 1800,
-        originalPrice: 2200,
-        discountPercentage: 18,
+        price: 2200,
         images: JSON.stringify([uploadUrl("1770969560212-zero-pain-oil.jpg")]),
         category: "Wellness",
         featured: true,
@@ -251,9 +217,7 @@ async function main() {
       {
         name: "Nashta",
         description: "Nutritious traditional breakfast blend.",
-        price: 2950,
-        originalPrice: 3850,
-        discountPercentage: 23,
+        price: 3850,
         images: JSON.stringify([uploadUrl("1770969560194-nashta.jpg")]),
         category: "Breakfast",
         featured: true,
@@ -266,9 +230,7 @@ async function main() {
       {
         name: "Vitaman",
         description: "Daily vitality blend for active lifestyle.",
-        price: 3200,
-        originalPrice: 4000,
-        discountPercentage: 20,
+        price: 4000,
         images: JSON.stringify([uploadUrl("1770969560124-Vitaman.jpg")]),
         category: "Supplements",
         featured: true,
@@ -356,7 +318,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Seed completed");
+  console.log("âœ… Seed completed");
 }
 
 main()
@@ -367,3 +329,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

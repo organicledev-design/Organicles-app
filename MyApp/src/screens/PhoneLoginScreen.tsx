@@ -6,6 +6,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useDispatch } from 'react-redux';
 import { setProfile } from '../store/slices/authSlice';
 import { userService } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+
+
 
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PhoneLogin'>;
@@ -21,6 +26,10 @@ const [email, setEmail] = useState('');
 const [showDobPicker, setShowDobPicker] = useState(false);
 const [dobDate, setDobDate] = useState<Date | null>(null);
 const [dob, setDob] = useState('');
+const [loading, setLoading] = useState(false);
+
+const normalizedPhone = `+92${phoneNumber.trim()}`;
+
 
 
 
@@ -42,7 +51,7 @@ setStep('otp');
     );
   };
 
-  const verifyFakeOtp = () => {
+ const verifyFakeOtp = async () => {
   if (otp.length !== 4) {
     Alert.alert('Error', 'Please enter 4-digit OTP');
     return;
@@ -51,8 +60,40 @@ setStep('otp');
     Alert.alert('Invalid OTP', 'Incorrect code. Please try again.');
     return;
   }
-  setStep('profile');
+
+  try {
+    setLoading(true);
+
+    const res = await userService.getProfileByPhone(normalizedPhone);
+
+    if (res.success && res.data) {
+      const profile = (res.data as any).user || (res.data as any).profile || res.data;
+
+      dispatch(
+        setProfile({
+          fullName: profile.fullName || '',
+          phone: profile.phone || normalizedPhone,
+          dob: profile.dob || '',
+          email: profile.email || '',
+          city: profile.city || '',
+          address: profile.address || '',
+        })
+      );
+
+      await AsyncStorage.setItem('auth_phone', normalizedPhone);
+      navigation.replace('Home');
+      return;
+    }
+
+    // New user: go to profile form
+    setStep('profile');
+  } catch (e: any) {
+    Alert.alert('Error', e?.message || 'Failed to check profile');
+  } finally {
+    setLoading(false);
+  }
 };
+
 
   const completeProfile = async () => {
     if (!fullName.trim()) {
@@ -65,28 +106,37 @@ setStep('otp');
     }
 
     const profilePayload = {
-      fullName: fullName.trim(),
-      phone: `+92${phoneNumber}`,
-      dob: dob.trim(),
-      email: email.trim(),
-    };
+    fullName: fullName.trim(),
+    phone: normalizedPhone,
+    dob: dob.trim(),
+    email: email.trim(),
+    city: '',
+    address: '',
+  };
 
+    try{
+      setLoading(true);
     const res = await userService.upsertProfile(profilePayload);
     if (!res.success) {
       Alert.alert('Error', res.error || 'Failed to save profile');
       return;
     }
+    
+        const saved = (res.data as any)?.profile || profilePayload;
 
-    dispatch(setProfile(profilePayload));
+    dispatch(setProfile(saved));
+    await AsyncStorage.setItem('auth_phone', normalizedPhone);
+
     navigation.replace('Home');
-  };
+    }finally{
+      setLoading(false);
+    }  };
 
   const handleContinue = async () => {
-    if (step === 'phone') sendFakeOtp();
-    else if (step === 'otp') verifyFakeOtp();
-    else await completeProfile();
-  };
-
+  if (step === 'phone') sendFakeOtp();
+  else if (step === 'otp') await verifyFakeOtp();
+  else await completeProfile();
+};
 
   const handleResendOtp = () => {
     setOtp('');
@@ -117,6 +167,7 @@ const formatDate = (date: Date) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
       
       <TouchableOpacity style={styles.backButton} onPress={handleBack}>
         <Text style={styles.backButtonText}>← Back</Text>

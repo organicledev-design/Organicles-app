@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   Modal, Pressable
 } from 'react-native';
+import Config from 'react-native-config';
+
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -21,29 +23,34 @@ import { heroBannerService,productService, reviewService, partnerService } from 
 import { Product, Review, Partner } from '../types';
 const { width } = Dimensions.get('window');
 
+
+const API_BASE = Config.API_BASE_URL || '';
+const ASSET_BASE = API_BASE.replace(/\/api\/?$/, '');
+
 const HERO_SLIDES = [
   'https://picsum.photos/seed/organic-1/1290/1000',
   'https://picsum.photos/seed/organic-2/1290/1000',
   'https://picsum.photos/seed/organic-3/1290/1000',
   'https://picsum.photos/seed/organic-4/1290/1000',
 ];
+
 const BUNDLES = [
   {
     id: 'bundle-1',
     title: "Men's Vitality Bundle",
-    image: 'http://192.168.100.17:5000/uploads/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x.webp',
+image: '/uploads/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x.webp',
     bundleId: 'bundle-1',
   },
   {
     id: 'bundle-2',
     title: 'Family Wellness Bundle',
-    image: 'http://192.168.100.17:5000/uploads/1771227370821-Bundle05updated_1170x.webp',
+image: '/uploads/1771227370821-Bundle05updated_1170x.webp',
     bundleId: 'bundle-2',
   },
   {
     id: 'bundle-3',
     title: 'All in One Bundle',
-    image: 'http://192.168.100.17:5000/uploads/1771227370841-Bundle06updated_1170x.webp',
+image: '/uploads/1771227370841-Bundle06updated_1170x.webp',
     bundleId: 'bundle-3',
   },
 ];
@@ -77,6 +84,8 @@ const bestSellerProducts = products
   });
 const [heroSlides, setHeroSlides] = useState<string[]>([]);
 
+// Use heroSlides from state (loaded from API), fallback to HERO_SLIDES if empty
+const displaySlides = heroSlides.length > 0 ? heroSlides : HERO_SLIDES;
 
 
   const loadHeroBanners = async () => {
@@ -157,6 +166,12 @@ setHeroSlides(banners.map((b: any) => b.imageUrl).filter(Boolean));
       setPartnersError(error?.message || 'Something went wrong while loading partners.');
     }
   };
+  const toFullUri = (value?: string) => {
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  if (value.startsWith('/')) return `${ASSET_BASE}${value}`;
+  return `${ASSET_BASE}/${value}`;
+};
 
   useEffect(() => {
     loadProducts();
@@ -297,10 +312,10 @@ onMenuPress={openMenu}
           style={styles.heroCarousel}
         >
             {/* CHANGED: wrap each image in a frame so image can be smaller inside full-width page */}
-{heroSlides.map((uri, index) => (
+            {displaySlides.map((uri, index) => (
   <View key={`${uri}-${index}`} style={styles.heroSlideFrame}>
     <Image
-      source={{ uri }}
+      source={{ uri  }}
       style={styles.heroSlideImage}
       resizeMode="cover" // CHANGED: show full image without aggressive crop
     />
@@ -377,8 +392,8 @@ onPress={() => navigateToProduct(product.id)}
   <View style={styles.bundleGrid}>
     {BUNDLES.map((bundle) => (
       <View key={bundle.id} style={styles.bundleCard}>
-<Image source={{ uri: bundle.image }} style={styles.bundleImage} resizeMode="contain" />
-        <Text style={styles.bundleTitle}>{bundle.title}</Text>
+<Image source={{ uri:  toFullUri(bundle.image)}} style={styles.bundleImage} resizeMode="contain" />
+        <Text style={styles.bundleImage}>{bundle.title}</Text>
         <TouchableOpacity style={styles.bundleButton} onPress={() => navigation.navigate('BundleDetail', { bundleId: bundle.bundleId })}
 >
           <Text style={styles.bundleButtonText}>SHOP NOW</Text>

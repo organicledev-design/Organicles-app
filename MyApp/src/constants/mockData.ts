@@ -1,13 +1,11 @@
-import { Product, Review, Partner } from '../types';
+﻿import { Product, Review, Partner } from '../types';
 
 export const MOCK_PRODUCTS: Product[] = [
   {
     id: '1',
     name: 'Nashta',
     description: 'Nashta is a science-backed, all-natural breakfast mix designed to boost energy, brain development, and digestion. Using wholesome ingredients and Ayurvedic herbs, it offers a chemical-free, nutrient-dense alternative to sugary cereals',
-    price: 2950,
-    originalPrice: 3850,
-    discountPercentage: 23,
+    price: 3850,
     images: [
       require('../images/best seller/nashta.jpg'),
     ],
@@ -21,9 +19,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '2',
     name: 'Vitaman',
     description: 'Essential vitamin-rich organic supplement blend. Packed with natural nutrients to boost immunity and energy.',
-    price: 3200,
-    originalPrice: 4000,
-    discountPercentage: 20,
+    price: 4000,
     images: [
       require('../images/best seller/Vitaman.jpg'),
     ],
@@ -37,9 +33,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '3',
     name: 'Desi Ghee',
     description: 'Experience the rich, traditional taste of Organicles Pure Desi Ghee. Naturally packed with essential nutrients and healthy fats, our additive-free ghee provides a clean energy boost for your daily meals.',
-    price: 4250,
-    originalPrice: 5500,
-    discountPercentage: 18,
+    price: 5500,
     images: [
       require('../images/best seller/desi ghee.jpg'),
     ],
@@ -53,9 +47,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '4',
     name: 'Zero Pain Oil',
     description: 'Raw unprocessed honey from mountain wildflowers. Rich flavor with natural enzymes and minerals.',
-    price: 1800,
-    originalPrice: 2200,
-    discountPercentage: 18,
+    price: 2200,
     images: [
       require('../images/best seller/zero pain oil.jpg'),
     ],
@@ -69,9 +61,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '5',
     name: 'Herbal Tea Blend',
     description: 'Carefully curated blend of organic herbs for relaxation and wellness. Caffeine-free and naturally soothing.',
-    price: 1200,
-    originalPrice: 1500,
-    discountPercentage: 20,
+    price: 1500,
     images: [
       'https://images.unsplash.com/photo-1597318130659-56283b41875f?w=400',
     ],
@@ -86,7 +76,6 @@ export const MOCK_PRODUCTS: Product[] = [
     name: 'Moringa Powder',
     description: 'Premium organic moringa leaf powder. Superfood packed with vitamins, minerals, and antioxidants.',
     price: 2100,
-    originalPrice: 2600,
     images: [
       require('../images/other products/moringa.jpg'),
     ],
@@ -100,9 +89,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '7',
     name: 'Olive Oil',
     description: 'Cold-pressed olive oil for everyday cooking and salads.',
-    price: 1900,
-    originalPrice: 2300,
-    discountPercentage: 17,
+    price: 2300,
     images: [
       require('../images/other products/olive oil 2.jpg'),
     ],
@@ -116,9 +103,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '8',
     name: 'Brown Sugar',
     description: 'Natural brown sugar with rich caramel notes.',
-    price: 650,
-    originalPrice: 800,
-    discountPercentage: 19,
+    price: 800,
     images: [
       require('../images/other products/brown sugar.jpg'),
     ],
@@ -132,9 +117,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '9',
     name: 'Turmeric',
     description: 'Pure turmeric powder for golden milk and cooking.',
-    price: 550,
-    originalPrice: 700,
-    discountPercentage: 21,
+    price: 700,
     images: [
       require('../images/other products/turmeric.jpg'),
     ],
@@ -148,9 +131,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '10',
     name: 'Spices Mix',
     description: 'Aromatic spice mix for rich flavor.',
-    price: 900,
-    originalPrice: 1100,
-    discountPercentage: 18,
+    price: 1100,
     images: [
       require('../images/other products/spices opt. 2.jpg'),
     ],
@@ -164,9 +145,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '11',
     name: 'Black Pepper',
     description: 'Fresh black pepper with bold aroma.',
-    price: 750,
-    originalPrice: 900,
-    discountPercentage: 17,
+    price: 900,
     images: [
       require('../images/other products/black pepper.jpg'),
     ],
@@ -180,9 +159,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '12',
     name: 'Pink Salt',
     description: 'Mineral-rich pink salt for everyday use.',
-    price: 500,
-    originalPrice: 650,
-    discountPercentage: 23,
+    price: 650,
     images: [
       require('../images/other products/pink salt.jpg'),
     ],
@@ -196,9 +173,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '13',
     name: 'Chia Seeds',
     description: 'Chia seeds packed with fiber and omega-3.',
-    price: 1200,
-    originalPrice: 1500,
-    discountPercentage: 20,
+    price: 1500,
     images: [
       require('../images/other products/chia seed.jpg'),
     ],
@@ -212,9 +187,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '14',
     name: 'Methi Dana',
     description: 'Fenugreek seeds for cooking and wellness.',
-    price: 450,
-    originalPrice: 600,
-    discountPercentage: 25,
+    price: 600,
     images: [
       require('../images/other products/methi dana.jpg'),
     ],
@@ -228,9 +201,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '15',
     name: 'Organic Honey',
     description: 'Raw unprocessed honey from mountain wildflowers.',
-    price: 1800,
-    originalPrice: 2200,
-    discountPercentage: 18,
+    price: 2200,
     images: [
       require('../images/other products/honey.jpg'),
     ],
@@ -244,9 +215,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '16',
     name: 'Clove',
     description: 'Whole cloves with warm, sweet aroma.',
-    price: 800,
-    originalPrice: 950,
-    discountPercentage: 16,
+    price: 950,
     images: [
       require('../images/other products/clove.jpg'),
     ],
@@ -260,9 +229,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '17',
     name: 'Cardamom',
     description: 'Green cardamom pods for tea and desserts.',
-    price: 1400,
-    originalPrice: 1700,
-    discountPercentage: 18,
+    price: 1700,
     images: [
       require('../images/other products/cardamom.jpg'),
     ],
@@ -276,9 +243,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '18',
     name: 'Cinnamon',
     description: 'Cinnamon sticks with sweet, woody flavor.',
-    price: 900,
-    originalPrice: 1100,
-    discountPercentage: 18,
+    price: 1100,
     images: [
       require('../images/other products/cinnamon.jpg'),
     ],
@@ -292,9 +257,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '19',
     name: 'Shilajit',
     description: 'Pure Himalayan Shilajit resin.',
-    price: 4500,
-    originalPrice: 5500,
-    discountPercentage: 18,
+    price: 5500,
     images: [
       require('../images/other products/shilajit.jpg'),
     ],
@@ -308,9 +271,7 @@ export const MOCK_PRODUCTS: Product[] = [
     id: '20',
     name: 'Coconut Oil',
     description: 'Cold-pressed coconut oil for cooking and skin.',
-    price: 1600,
-    originalPrice: 2000,
-    discountPercentage: 20,
+    price: 2000,
     images: [
       require('../images/other products/coconut oil.jpg'),
     ],
@@ -381,3 +342,4 @@ export const MOCK_PARTNERS: Partner[] = [
     logo: 'https://via.placeholder.com/100x50/2D5016/FFFFFF?text=GLI',
   },
 ];
+

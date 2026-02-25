@@ -21,8 +21,6 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - SPACING.md * 3) / 2;
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, horizontal = false }) => {
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
-
   return (
     <TouchableOpacity
       style={[styles.card, horizontal && styles.horizontalCard]}
@@ -38,11 +36,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, horizontal 
           style={styles.image}
           resizeMode="cover"
         />
-        {hasDiscount && (
-          <View style={styles.discountBadge}>
-            <Text style={styles.discountText}>-{product.discountPercentage}%</Text>
-          </View>
-        )}
         {product.bestSeller && (
           <View style={styles.bestSellerBadge}>
             <Text style={styles.bestSellerText}>Best Seller</Text>
@@ -57,11 +50,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, horizontal 
         
         <View style={styles.priceContainer}>
           <Text style={styles.price}>{formatCurrency(product.price)}</Text>
-          {hasDiscount && (
-            <Text style={styles.originalPrice}>
-              {formatCurrency(product.originalPrice!)}
-            </Text>
-          )}
         </View>
         
         {product.stock < 10 && product.stock > 0 && (
@@ -98,20 +86,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  discountBadge: {
-    position: 'absolute',
-    top: SPACING.sm,
-    right: SPACING.sm,
-    backgroundColor: COLORS.error,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.sm,
-  },
-  discountText: {
-    color: COLORS.white,
-    fontSize: FONT_SIZES.xs,
-    fontWeight: FONT_WEIGHTS.bold,
-  },
   bestSellerBadge: {
     position: 'absolute',
     top: SPACING.sm,
@@ -146,12 +120,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.primary,
-  },
-  originalPrice: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.regular,
-    color: COLORS.textLight,
-    textDecorationLine: 'line-through',
   },
   stockWarning: {
     fontSize: FONT_SIZES.xs,

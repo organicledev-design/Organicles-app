@@ -1,5 +1,12 @@
 const prisma = require('../prisma');
 
+const buildAssetUrl = (req, rawUrl) => {
+  if (typeof rawUrl !== "string" || rawUrl.length === 0) return rawUrl;
+  const match = rawUrl.match(/\/uploads\/.+$/);
+  if (!match) return rawUrl;
+  return `${req.protocol}://${req.get("host")}${match[0]}`;
+};
+
 const getActiveHeroBanners = async (req, res) => {
   try {
     const banners = await prisma.heroBanner.findMany({
@@ -7,7 +14,12 @@ const getActiveHeroBanners = async (req, res) => {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     });
 
-    return res.json({ success: true, data: banners });
+    const normalized = banners.map((b) => ({
+      ...b,
+      imageUrl: buildAssetUrl(req, b.imageUrl),
+    }));
+
+    return res.json({ success: true, data: normalized });
   } catch (error) {
     return res.status(500).json({
       success: false,

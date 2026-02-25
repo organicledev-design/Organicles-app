@@ -1,16 +1,24 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet,TouchableOpacity, ScrollView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import Header from '../components/Header';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import { RootState } from '../store';
 import { setProfile } from '../store/slices/authSlice';
 import { userService } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logout } from '../store/slices/authSlice';
 
-const ProfileScreen = () => {
+
+
+const ProfileScreen = ( { navigation }: any) => {
   const dispatch = useDispatch();
   const profile = useSelector((state: RootState) => state.auth.profile);
-
+  const handleLogout = async () => {
+  await AsyncStorage.removeItem('auth_phone');
+  dispatch(logout());
+  navigation.replace('PhoneLogin');
+  }
   useEffect(() => {
     const fetchLatestProfile = async () => {
       if (!profile?.phone) return;
@@ -63,7 +71,12 @@ const ProfileScreen = () => {
           <Text style={styles.label}>Email (Optional)</Text>
           <Text style={styles.value}>{displayProfile.email || 'Optional'}</Text>
         </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+  <Text style={styles.logoutText}>Logout</Text>
+</TouchableOpacity>
+
       </ScrollView>
+      
     </View>
   );
 };
@@ -123,6 +136,19 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHTS.medium,
     color: COLORS.textPrimary,
   },
+  logoutButton: {
+  marginTop: 24,
+  backgroundColor: '#D32F2F',
+  paddingVertical: 12,
+  borderRadius: 10,
+  alignItems: 'center',
+},
+logoutText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '600',
+},
+
 });
 
 export default ProfileScreen;

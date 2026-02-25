@@ -60,7 +60,17 @@ app.use("/api/health", require("./routes/health.routes"));
 app.use("/api/products", require("./routes/product.routes"));
 app.use("/api/reviews", require("./routes/review.routes"));
 app.use("/api/partners", require("./routes/partner.routes"));
-app.use("/uploads", express.static(uploadsDir));
+app.use(
+  '/uploads',
+  express.static(uploadsDir, {
+    maxAge: '7d',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    },
+  })
+);
 app.use("/api/uploads", require("./routes/upload.routes"));
 app.use('/api/hero-banners', heroBannerRoutes);
 app.use("/api/users", require("./routes/user.routes"));

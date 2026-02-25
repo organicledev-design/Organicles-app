@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,20 +9,30 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { addAddress, selectAddress } from '../store/slices/addressSlice';
+import { addAddress, selectAddress, updateAddress,
+  deleteAddress,
+  hydrateAddresses, } from '../store/slices/addressSlice';
 import Header from '../components/Header';
 import Button from '../components/Button';
 import { Address } from '../types';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 import { generateId, isValidPhone, isValidEmail } from '../utils/helpers';
 
+
 const AddressScreen = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const { addresses, selectedAddress } = useSelector((state: RootState) => state.address);
+  const ADDRESSES_KEY = 'saved_addresses';
+const SELECTED_ADDRESS_ID_KEY = 'selected_address_id';
+
+const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+const [hydrated, setHydrated] = useState(false);
+
   
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -42,8 +52,87 @@ const AddressScreen = () => {
   };
 
   const handleAddNewAddress = () => {
-    setShowAddressForm(true);
+  setEditingAddressId(null);
+  setFormData({
+    fullName: '',
+    email: '',
+    phone: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    isDefault: false,
+  });
+  setShowAddressForm(true);
+};
+
+const handleEditAddress = (address: Address) => {
+  setEditingAddressId(address.id);
+  setFormData({
+    fullName: address.fullName,
+    email: address.email,
+    phone: address.phone,
+    addressLine1: address.addressLine1,
+    addressLine2: address.addressLine2 || '',
+    city: address.city,
+    state: address.state,
+    zipCode: address.zipCode,
+    isDefault: address.isDefault,
+  });
+  setShowAddressForm(true);
+};
+
+const handleDeleteAddress = (id: string) => {
+  Alert.alert('Delete Address', 'Are you sure you want to delete this address?', [
+    { text: 'Cancel', style: 'cancel' },
+    {
+      text: 'Delete',
+      style: 'destructive',
+      onPress: () => dispatch(deleteAddress(id)),
+    },
+  ]);
+};
+
+
+
+  // load effect
+  useEffect(() => {
+  const loadSavedAddresses = async () => {
+    try {
+      const rawAddresses = await AsyncStorage.getItem(ADDRESSES_KEY);
+      const rawSelectedId = await AsyncStorage.getItem(SELECTED_ADDRESS_ID_KEY);
+
+      const parsedAddresses: Address[] = rawAddresses ? JSON.parse(rawAddresses) : [];
+      const selectedAddressId = rawSelectedId || null;
+
+      dispatch(hydrateAddresses({ addresses: parsedAddresses, selectedAddressId }));
+    } catch (e) {
+      console.log('Failed to load addresses:', e);
+    } finally {
+      setHydrated(true);
+    }
   };
+
+  loadSavedAddresses();
+}, [dispatch]);
+
+// save effect
+useEffect(() => {
+  if (!hydrated) return;
+
+  const persistAddresses = async () => {
+    try {
+      await AsyncStorage.setItem(ADDRESSES_KEY, JSON.stringify(addresses));
+      await AsyncStorage.setItem(SELECTED_ADDRESS_ID_KEY, selectedAddress?.id || '');
+    } catch (e) {
+      console.log('Failed to save addresses:', e);
+    }
+  };
+
+  persistAddresses();
+}, [addresses, selectedAddress, hydrated]);
+
 
   const validateForm = () => {
     if (!formData.fullName.trim()) {
@@ -76,31 +165,27 @@ const AddressScreen = () => {
     }
     return true;
   };
+const handleSaveAddress = () => {
+  if (!validateForm()) return;
 
-  const handleSaveAddress = () => {
-    if (!validateForm()) return;
-
-    const newAddress: Address = {
-      id: generateId(),
-      ...formData,
-    };
-
-    dispatch(addAddress(newAddress));
-    dispatch(selectAddress(newAddress));
-    setShowAddressForm(false);
-    setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      isDefault: false,
-    });
-    Alert.alert('Success', 'Address added successfully');
+  const payload: Address = {
+    id: editingAddressId || generateId(),
+    ...formData,
   };
+
+  if (editingAddressId) {
+    dispatch(updateAddress(payload));
+    dispatch(selectAddress(payload));
+    Alert.alert('Success', 'Address updated successfully');
+  } else {
+    dispatch(addAddress(payload));
+    dispatch(selectAddress(payload));
+    Alert.alert('Success', 'Address added successfully');
+  }
+
+  setEditingAddressId(null);
+  setShowAddressForm(false);
+};
 
   const handleProceedToPayment = () => {
     if (!selectedAddress) {
@@ -132,13 +217,14 @@ const AddressScreen = () => {
                 styles.addressCard,
                 selectedAddress?.id === address.id && styles.selectedAddress,
               ]}
-              onPress={() => handleSelectAddress(address)}>
+              onPress={() => handleSelectAddress(address)}
+            >
               <View style={styles.radioButton}>
                 {selectedAddress?.id === address.id && (
                   <View style={styles.radioButtonSelected} />
                 )}
               </View>
-              
+
               <View style={styles.addressInfo}>
                 <Text style={styles.addressName}>{address.fullName}</Text>
                 <Text style={styles.addressEmail}>{address.email}</Text>
@@ -155,6 +241,14 @@ const AddressScreen = () => {
                     <Text style={styles.defaultText}>Default</Text>
                   </View>
                 )}
+                <View style={styles.addressActions}>
+                  <TouchableOpacity onPress={() => handleEditAddress(address)}>
+                    <Text style={styles.editText}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteAddress(address.id)}>
+                    <Text style={styles.deleteText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </TouchableOpacity>
           ))}
@@ -369,6 +463,21 @@ const styles = StyleSheet.create({
   defaultText: {
     color: COLORS.white,
     fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.semibold,
+  },
+  addressActions: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  editText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.semibold,
+  },
+  deleteText: {
+    color: COLORS.error,
+    fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.semibold,
   },
   addAddressButton: {
