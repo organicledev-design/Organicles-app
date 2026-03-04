@@ -5,7 +5,7 @@ const prisma = require("./prisma"); // ✅ ADD THIS LINE
 
 const PORT = process.env.PORT || 5000;
 
-// TEMP DB TEST ROUTE
+// TEMP DB TEST ROUTEs
 app.get("/test-db", async (req, res) => {
   try {
     const result = await prisma.$queryRaw`SELECT 1`;
