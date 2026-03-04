@@ -38,19 +38,19 @@ const BUNDLES = [
   {
     id: 'bundle-1',
     title: "Men's Vitality Bundle",
-image: '/uploads/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x.webp',
+image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x_u04v5l.webp',
     bundleId: 'bundle-1',
   },
   {
     id: 'bundle-2',
     title: 'Family Wellness Bundle',
-image: '/uploads/1771227370821-Bundle05updated_1170x.webp',
+image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370821-Bundle05updated_1170x_dyztvj.webp',
     bundleId: 'bundle-2',
   },
   {
     id: 'bundle-3',
     title: 'All in One Bundle',
-image: '/uploads/1771227370841-Bundle06updated_1170x.webp',
+image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370841-Bundle06updated_1170x_w3ngju.webp',
     bundleId: 'bundle-3',
   },
 ];

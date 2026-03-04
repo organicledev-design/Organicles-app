@@ -12,13 +12,13 @@ type BundleRouteProp = RouteProp<RootStackParamList, 'BundleDetail'>;
 const BUNDLE_MAP: Record<string, { title: string; image: string; product: Product }> = {
   'bundle-1': {
     title: "Men's Vitality Bundle",
-    image: 'http://192.168.100.17:5000/uploads/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x.webp',
+    image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x_u04v5l.webp',
     product: {
       id: 'bundle-1',
       name: "Men's Vitality Bundle",
       description: 'Complete vitality combo.',
       price: 3500,
-      images: ['http://192.168.100.17:5000/uploads/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x.webp'],
+      images: ['https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x_u04v5l.webp'],
       category: 'Bundles',
       featured: true,
       bestSeller: true,
@@ -28,13 +28,13 @@ const BUNDLE_MAP: Record<string, { title: string; image: string; product: Produc
   },
   'bundle-2': {
     title: 'Family Wellness Bundle',
-    image: 'http://192.168.100.17:5000/uploads/1771227370821-Bundle05updated_1170x.webp',
+    image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370821-Bundle05updated_1170x_dyztvj.webp',
     product: {
       id: 'bundle-2',
       name: 'Family Wellness Bundle',
       description: 'Family wellness combo.',
       price: 4900,
-      images: ['http://192.168.100.17:5000/uploads/1771227370821-Bundle05updated_1170x.webp'],
+      images: ['https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370821-Bundle05updated_1170x_dyztvj.webp'],
       category: 'Bundles',
       featured: true,
       bestSeller: true,
@@ -44,13 +44,13 @@ const BUNDLE_MAP: Record<string, { title: string; image: string; product: Produc
   },
   'bundle-3': {
     title: 'All in One Bundle',
-    image: 'http://192.168.100.17:5000/uploads/1771227370841-Bundle06updated_1170x.webp',
+    image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370841-Bundle06updated_1170x_w3ngju.webp',
     product: {
       id: 'bundle-3',
       name: 'All in One Bundle',
       description: 'All-in-one value combo.',
       price: 5900,
-      images: ['http://192.168.100.17:5000/uploads/1771227370841-Bundle06updated_1170x.webp'],
+      images: ['https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370841-Bundle06updated_1170x_w3ngju.webp'],
       category: 'Bundles',
       featured: true,
       bestSeller: true,
