@@ -119,5 +119,9 @@ export type RootStackParamList = {
   Payment: undefined;
   OrderSuccess: { orderId: string };
   BundleDetail: { bundleId: string };
+  PaymentWebView: {        // ← ADDED
+    checkoutUrl: string;
+    orderId: string;
+  };
 
 };

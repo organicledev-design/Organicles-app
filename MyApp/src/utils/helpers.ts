@@ -76,3 +76,16 @@ export const getStockStatus = (stock: number): string => {
   if (stock < 10) return `Only ${stock} left`;
   return 'In Stock';
 };
+
+// Resolve relative asset URLs (e.g. /uploads/*) against API base
+export const toAbsoluteUrl = (value?: string, apiBase?: string): string => {
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+
+  const base = (apiBase || '').toString();
+  if (!base) return value;
+
+  const assetBase = base.replace(/\/api\/?$/, '');
+  if (value.startsWith('/')) return `${assetBase}${value}`;
+  return `${assetBase}/${value}`;
+};

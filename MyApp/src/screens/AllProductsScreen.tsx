@@ -1,16 +1,23 @@
-import React, { useState, useEffect} from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, ScrollView, StyleSheet,
+  TouchableOpacity, ActivityIndicator,
+} from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import Header from '../components/Header';
 import ProductCard from '../components/ProductCard';
 import { productService } from '../services/api';
 import { Product } from '../types';
-
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '../constants/theme';
 
+type AllProductsRouteParams = {
+  AllProducts: { initialCategory?: string };
+};
+
 const CATEGORIES = [
+  'Best Sellers',
   'All',
   'Breakfast',
   'Supplements',
@@ -26,69 +33,73 @@ const CATEGORIES = [
 
 const AllProductsScreen = () => {
   const navigation = useNavigation<any>();
+  const route = useRoute<RouteProp<AllProductsRouteParams, 'AllProducts'>>();
   const cartItems = useSelector((state: RootState) => state.cart.totalItems);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-const [allProducts, setAllProducts] = useState<Product[]>([]);
-const [loadingProducts, setLoadingProducts] = useState(true);
-const [productError, setProductError] = useState<string | null>(null);
-const loadProducts = async () => {
-  setLoadingProducts(true);
-  setProductError(null);
 
-  try {
-    const res = await productService.getAll();
-    if (!res.success || !res.data) {
-      setProductError(res.error || 'Failed to load products.');
-      return;
+  const [selectedCategory, setSelectedCategory] = useState(
+    route.params?.initialCategory || 'All'
+  );
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productError, setProductError] = useState<string | null>(null);
+
+  const loadProducts = async () => {
+    setLoadingProducts(true);
+    setProductError(null);
+    try {
+      const res = await productService.getAll();
+      if (!res.success || !res.data) {
+        setProductError(res.error || 'Failed to load products.');
+        return;
+      }
+      const rows = Array.isArray(res.data)
+        ? res.data
+        : ((res.data as unknown as { products?: Product[] }).products || []);
+      setAllProducts(rows);
+    } catch (error: any) {
+      setProductError(error?.message || 'Something went wrong while loading products.');
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  useEffect(() => { loadProducts(); }, []);
+
+  // Sync if the user navigates here again from the HomeScreen with a different category
+  useEffect(() => {
+    if (route.params?.initialCategory) {
+      setSelectedCategory(route.params.initialCategory);
+    }
+  }, [route.params?.initialCategory]);
+
+  const getGroupedProducts = () => {
+    if (selectedCategory === 'Best Sellers') {
+      const bestSellers = allProducts
+        .filter((p) => p.bestSeller)
+        .sort((a: any, b: any) => (a.bestSellerOrder ?? 9999) - (b.bestSellerOrder ?? 9999));
+      return { 'Best Sellers': bestSellers };
     }
 
-    const rows = Array.isArray(res.data)
-      ? res.data
-      : ((res.data as unknown as { products?: Product[] }).products || []);
-    setAllProducts(rows);
-  } catch (error: any) {
-    setProductError(error?.message || 'Something went wrong while loading products.');
-  } finally {
-    setLoadingProducts(false);
-  }
-};
-
-
-  // Group products by category
-  const getGroupedProducts = () => {
     if (selectedCategory === 'All') {
-      // Group all products by their category
-      const grouped: { [key: string]: typeof allProducts } = {};
-      allProducts.forEach(product => {
-        if (!grouped[product.category]) {
-          grouped[product.category] = [];
-        }
+      const grouped: { [key: string]: Product[] } = {};
+      allProducts.forEach((product) => {
+        if (!grouped[product.category]) grouped[product.category] = [];
         grouped[product.category].push(product);
       });
       return grouped;
-    } else {
-      // Filter by selected category
-      return {
-        [selectedCategory]: allProducts.filter(p => 
-          p.category.toLowerCase() === selectedCategory.toLowerCase()
-        )
-      };
     }
+
+    return {
+      [selectedCategory]: allProducts.filter(
+        (p) => p.category.toLowerCase() === selectedCategory.toLowerCase()
+      ),
+    };
   };
 
   const groupedProducts = getGroupedProducts();
 
-  const navigateToProduct = (productId: string) => {
-    navigation.navigate('ProductDetail', { productId });
-  };
-
-  const navigateToCart = () => {
-    navigation.navigate('Cart');
-  };
-  useEffect(() => {
-  loadProducts();
-}, []);
-
+  const navigateToProduct = (productId: string) => navigation.navigate('ProductDetail', { productId });
+  const navigateToCart = () => navigation.navigate('Cart');
 
   return (
     <View style={styles.container}>
@@ -102,12 +113,12 @@ const loadProducts = async () => {
 
       {/* Category Filter */}
       <View style={styles.categoryContainer}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryList}
         >
-          {CATEGORIES.map(category => (
+          {CATEGORIES.map((category) => (
             <TouchableOpacity
               key={category}
               style={[
@@ -122,14 +133,14 @@ const loadProducts = async () => {
                   selectedCategory === category && styles.categoryTextActive,
                 ]}
               >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
+                {category}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
-      {/* Products by Category */}
+      {/* Products */}
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {loadingProducts ? (
           <View style={styles.statusContainer}>
@@ -144,12 +155,12 @@ const loadProducts = async () => {
             </TouchableOpacity>
           </View>
         ) : (
-          Object.entries(groupedProducts).map(([category, products]) => (
-            products.length > 0 && (
+          Object.entries(groupedProducts).map(([category, products]) =>
+            products.length > 0 ? (
               <View key={category} style={styles.categorySection}>
                 <Text style={styles.categoryTitle}>{category}</Text>
                 <View style={styles.productGrid}>
-                  {products.map(product => (
+                  {products.map((product) => (
                     <ProductCard
                       key={product.id}
                       product={product}
@@ -158,10 +169,9 @@ const loadProducts = async () => {
                   ))}
                 </View>
               </View>
-            )
-          ))
+            ) : null
+          )
         )}
-        
         <View style={styles.footer} />
       </ScrollView>
     </View>
@@ -169,41 +179,14 @@ const loadProducts = async () => {
 };
 
 const styles = StyleSheet.create({
-  statusContainer: {
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingVertical: SPACING.lg,
-  gap: SPACING.sm,
-},
-statusText: {
-  fontSize: FONT_SIZES.sm,
-  color: COLORS.textSecondary,
-},
-errorText: {
-  fontSize: FONT_SIZES.sm,
-  color: COLORS.error,
-  textAlign: 'center',
-  paddingHorizontal: SPACING.md,
-},
-retryText: {
-  fontSize: FONT_SIZES.sm,
-  fontWeight: FONT_WEIGHTS.semibold,
-  color: COLORS.primary,
-},
-
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
   categoryContainer: {
     backgroundColor: COLORS.surface,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  categoryList: {
-    paddingHorizontal: SPACING.md,
-  },
+  categoryList: { paddingHorizontal: SPACING.md },
   categoryButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -211,29 +194,21 @@ retryText: {
     backgroundColor: COLORS.background,
     marginRight: SPACING.sm,
   },
-  categoryButtonActive: {
-    backgroundColor: COLORS.primary,
-  },
+  categoryButtonActive: { backgroundColor: COLORS.primary },
   categoryText: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
     color: COLORS.textSecondary,
   },
-  categoryTextActive: {
-    color: COLORS.white,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  categorySection: {
-    paddingVertical: SPACING.md,
-  },
+  categoryTextActive: { color: COLORS.white },
+  scrollView: { flex: 1 },
+  categorySection: { paddingVertical: SPACING.sm },
   categoryTitle: {
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textPrimary,
     paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   productGrid: {
     flexDirection: 'row',
@@ -241,9 +216,25 @@ retryText: {
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
   },
-  footer: {
-    height: SPACING.xl,
+  statusContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.lg,
+    gap: SPACING.sm,
   },
+  statusText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
+  errorText: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.error,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.md,
+  },
+  retryText: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.primary,
+  },
+  footer: { height: SPACING.xl },
 });
 
 export default AllProductsScreen;

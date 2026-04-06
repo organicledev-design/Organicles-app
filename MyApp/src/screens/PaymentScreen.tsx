@@ -155,6 +155,8 @@ const PaymentScreen = () => {
       }
 
       /** CARD / WALLET — backend payment */
+
+      
       const paymentPayloadDETAILED = {
   items: cart.items.map(item => ({
     id: item.product.id,
@@ -215,8 +217,11 @@ const payment = paymentResult.data;
       );
 
       dispatch(clearCart());
-      navigation.replace('OrderSuccess', { orderId: payment.order.id });
-    } catch (error) {
+const { checkout_url } = paymentResult.data;
+navigation.navigate('PaymentWebView', {
+  checkoutUrl: ' https://google.com',
+  orderId: 'test-123',
+});    } catch (error) {
       console.error(error);
       Alert.alert('Payment Failed', 'Unable to process payment. Please try again.');
     } finally {

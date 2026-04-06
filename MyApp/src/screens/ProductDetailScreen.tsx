@@ -15,13 +15,14 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '../store/slices/cartSlice';
 import Header from '../components/Header';
 import Button from '../components/Button';
-import { productService } from '../services/api';
+import apiClient, { productService } from '../services/api';
 import { Product } from '../types';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS, SHADOWS } from '../constants/theme';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, toAbsoluteUrl } from '../utils/helpers';
+import Config from 'react-native-config';
 
 const { width } = Dimensions.get('window');
-
+const API_BASE = (Config.API_BASE_URL || apiClient.defaults.baseURL || '').toString();
 const ProductDetailScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -34,13 +35,53 @@ const ProductDetailScreen = () => {
   
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariant, setSelectedVariant] = useState(0);
 
+  const NASHTA_VARIANTS = [
+    { label: '250gm', price: 2950 },
+    { label: '500gm', price: 5350 },
+  ];
+
+  const isNashta = product?.name === 'Nashta';
+
+  const toFullUri = (value?: string) => toAbsoluteUrl(value, API_BASE);
+  const safeStringify = (value: any) => {
+    try {
+      const text = JSON.stringify(value, null, 2);
+      if (text.length > 900) return `${text.slice(0, 900)}\n...trimmed`;
+      return text;
+    } catch {
+      return '[unserializable]';
+    }
+  };
+  const normalizeImages = (value: any): any[] => {
+    if (Array.isArray(value)) {
+      return value.map((img) => (typeof img === 'string' ? toFullUri(img) : img)).filter(Boolean);
+    }
+    if (typeof value === 'string') return [toFullUri(value)];
+    return [];
+  };
+  useEffect(() => {
+    console.error(`ProductDetail mounted\nparams=${safeStringify(route?.params)}`);
+  }, []);
   useEffect(() => {
     const loadProduct = async () => {
       setLoadingProduct(true);
       setProductError(null);
 
       try {
+        if (!productId) {
+          setProductError('Missing product id.');
+          console.error(`loadProduct: missing productId\nparams=${safeStringify(route?.params)}`);
+          return;
+        }
+        if (!productService || typeof (productService as any).getById !== 'function') {
+          setProductError('Product service unavailable.');
+          console.error(
+            `loadProduct: service missing\nproductService=${safeStringify(productService)}\ngetByIdType=${typeof (productService as any)?.getById}`
+          );
+          return;
+        }
         const res = await productService.getById(productId);
         if (!res.success || !res.data) {
           setProductError(res.error || 'Failed to load product.');
@@ -48,9 +89,20 @@ const ProductDetailScreen = () => {
         }
 
         const productData = (res.data as any).product || res.data;
-        setProduct(productData);
+        console.error(
+          `loadProduct: success=true\n` +
+            `id=${productId}\n` +
+            `imagesType=${typeof productData?.images}\n` +
+            `raw=${safeStringify(res.data)}`
+        );
+        const images = normalizeImages(productData?.images);
+        setSelectedImage(0);
+        setProduct({ ...productData, images });
       } catch (error: any) {
         setProductError(error?.message || 'Something went wrong while loading product.');
+        console.error(
+          `loadProduct: threw\nid=${productId}\nmessage=${error?.message || 'n/a'}\nerror=${safeStringify(error)}`
+        );
       } finally {
         setLoadingProduct(false);
       }
@@ -77,6 +129,8 @@ const ProductDetailScreen = () => {
   }
 
   const handleAddToCart = () => {
+    const price = isNashta ? NASHTA_VARIANTS[selectedVariant].price : product.price;
+const variantLabel = isNashta ? NASHTA_VARIANTS[selectedVariant].label : null;
     if (product.stock === 0) {
       Alert.alert('Out of Stock', 'This product is currently unavailable.');
       return;
@@ -87,7 +141,7 @@ const ProductDetailScreen = () => {
       return;
     }
 
-    dispatch(addToCart({ product, quantity }));
+dispatch(addToCart({ product: { ...product, price }, quantity }));
     Alert.alert(
       'Added to Cart',
       `${quantity} x ${product.name} added to your cart.`,
@@ -111,6 +165,13 @@ const ProductDetailScreen = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
     }
+    console.error('product data:', JSON.stringify({
+  name: product.name,
+  tagsType: typeof product.tags,
+  tags: product.tags,
+  imagesType: typeof product.images,
+  images: product.images,
+}));
   };
 
   return (
@@ -123,15 +184,21 @@ const ProductDetailScreen = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Image Gallery */}
         <View style={styles.imageSection}>
-          <Image
-            source={
-              typeof product.images[selectedImage] === 'string'
-                ? { uri: product.images[selectedImage] }
-                : product.images[selectedImage]
-            }
-            style={styles.mainImage}
-            resizeMode="cover"
-          />
+          {product.images.length > 0 ? (
+            <Image
+              source={
+                typeof product.images[selectedImage] === 'string'
+                  ? { uri: product.images[selectedImage] }
+                  : product.images[selectedImage]
+              }
+              style={styles.mainImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <View style={styles.mainImagePlaceholder}>
+              <Text style={styles.mainImagePlaceholderText}>No Image</Text>
+            </View>
+          )}
           
           {product.bestSeller && (
             <View style={styles.bestSellerBadge}>
@@ -169,19 +236,29 @@ const ProductDetailScreen = () => {
           <Text style={styles.productName}>{product.name}</Text>
           
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>{formatCurrency(product.price)}</Text>
-          </View>
+  <Text style={styles.price}>
+    {formatCurrency(isNashta ? NASHTA_VARIANTS[selectedVariant].price : product.price)}
+  </Text>
+</View>
 
-          {product.tags && (
-            <View style={styles.tagsContainer}>
-              {product.tags.map((tag, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
+{isNashta && (
+  <View style={styles.variantSection}>
+    <Text style={styles.sectionTitle}>Size</Text>
+    <View style={styles.variantRow}>
+      {NASHTA_VARIANTS.map((v, i) => (
+        <TouchableOpacity
+          key={i}
+          style={[styles.variantButton, selectedVariant === i && styles.variantButtonSelected]}
+          onPress={() => setSelectedVariant(i)}
+        >
+          <Text style={[styles.variantText, selectedVariant === i && styles.variantTextSelected]}>
+            {v.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+)}
           <View style={styles.stockContainer}>
             {product.stock > 0 ? (
               <Text style={[
@@ -198,41 +275,39 @@ const ProductDetailScreen = () => {
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.description}>{product.description}</Text>
 
-          {/* Quantity Selector */}
-          <View style={styles.quantitySection}>
-            <Text style={styles.sectionTitle}>Quantity</Text>
-            <View style={styles.quantitySelector}>
-              <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={decrementQuantity}
-                disabled={quantity <= 1}>
-                <Text style={styles.quantityButtonText}>−</Text>
-              </TouchableOpacity>
-              
-              <View style={styles.quantityDisplay}>
-                <Text style={styles.quantityText}>{quantity}</Text>
-              </View>
-              
-              <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={incrementQuantity}
-                disabled={quantity >= product.stock}>
-                <Text style={styles.quantityButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+
+
+    
+
+                </View>
       </ScrollView>
 
-      {/* Add to Cart Button */}
       <View style={styles.footer}>
-        <Button
-          title={product.stock > 0 ? "Add to Cart" : "Out of Stock"}
-          onPress={handleAddToCart}
-          disabled={product.stock === 0}
-          fullWidth
-        />
+  <View style={styles.footerRow}>
+    <View style={styles.quantitySelector}>
+      <TouchableOpacity style={styles.quantityButton} onPress={decrementQuantity} disabled={quantity <= 1}>
+        <Text style={styles.quantityButtonText}>−</Text>
+      </TouchableOpacity>
+      <View style={styles.quantityDisplay}>
+        <Text style={styles.quantityText}>{quantity}</Text>
       </View>
+      <TouchableOpacity style={styles.quantityButton} onPress={incrementQuantity} disabled={quantity >= product.stock}>
+        <Text style={styles.quantityButtonText}>+</Text>
+      </TouchableOpacity>
+    </View>
+
+    <TouchableOpacity
+      style={[styles.addToCartBtn, product.stock === 0 && styles.addToCartDisabled]}
+      onPress={handleAddToCart}
+      disabled={product.stock === 0}
+    >
+      <Text style={styles.addToCartText}>
+        {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+      </Text>
+    </TouchableOpacity>
+  </View>
+</View>
+      
     </View>
   );
 };
@@ -261,11 +336,23 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     position: 'relative',
+    alignItems: 'center',
   },
   mainImage: {
-    width: width,
-    height: width,
+    width: width * 0.8,
+    height: width * 0.8,
     backgroundColor: COLORS.secondaryLight,
+  },
+  mainImagePlaceholder: {
+    width: width * 0.8,
+    height: width * 0.8,
+    backgroundColor: COLORS.secondaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mainImagePlaceholderText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.sm,
   },
   bestSellerBadge: {
     position: 'absolute',
@@ -341,6 +428,22 @@ const styles = StyleSheet.create({
   stockContainer: {
     marginBottom: SPACING.md,
   },
+  addToCartInline: {
+  height: 44,
+  backgroundColor: COLORS.primary,
+  borderRadius: BORDER_RADIUS.md,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingHorizontal: SPACING.lg,  // controls width
+},
+addToCartDisabled: {
+  backgroundColor: COLORS.border,
+},
+addToCartInlineText: {
+  color: COLORS.white,
+  fontWeight: FONT_WEIGHTS.bold,
+  fontSize: FONT_SIZES.md,
+},
   stockText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.success,
@@ -373,6 +476,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
+      flexWrap: 'nowrap',  // ADD THIS
+
   },
   quantityButton: {
     width: 44,
@@ -407,6 +512,52 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     ...SHADOWS.lg,
   },
+  variantSection: {
+  marginBottom: SPACING.md,
+},
+variantRow: {
+  flexDirection: 'row',
+  gap: SPACING.sm,
+},
+variantButton: {
+  paddingHorizontal: SPACING.lg,
+  paddingVertical: SPACING.sm,
+  borderRadius: BORDER_RADIUS.md,
+  borderWidth: 2,
+  borderColor: COLORS.border,
+},
+variantButtonSelected: {
+  borderColor: COLORS.primary,
+  backgroundColor: COLORS.primaryLight,
+},
+variantText: {
+  fontSize: FONT_SIZES.md,
+  fontWeight: FONT_WEIGHTS.semibold,
+  color: COLORS.textSecondary,
+},
+variantTextSelected: {
+  color: COLORS.white,
+},
+
+footerRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: SPACING.md,
+},
+addToCartBtn: {
+  flex: 1,
+  height: 44,
+  backgroundColor: COLORS.primary,
+  borderRadius: BORDER_RADIUS.md,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+addToCartText: {
+  color: COLORS.white,
+  fontWeight: FONT_WEIGHTS.bold,
+  fontSize: FONT_SIZES.md,
+},
 });
 
 export default ProductDetailScreen;

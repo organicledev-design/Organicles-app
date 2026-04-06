@@ -16,6 +16,7 @@ import AddressScreen from '../screens/AddressScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import OrderSuccessScreen from '../screens/OrderSuccessScreen';
 import BundleDetail from '../screens/BundleDetailScreen';
+import PaymentWebViewScreen from '../screens/PaymentWebViewScreen';
 
 
 
@@ -42,6 +43,8 @@ const AppNavigator = () => {
         <Stack.Screen name="Address" component={AddressScreen} />
         <Stack.Screen name="Payment" component={PaymentScreen} />
         <Stack.Screen name="BundleDetail" component={BundleDetail} />
+        <Stack.Screen name="PaymentWebView" component={PaymentWebViewScreen} />
+
         <Stack.Screen 
           name="OrderSuccess" 
           component={OrderSuccessScreen}

@@ -3,19 +3,24 @@ import { Product, Order, ApiResponse, Review, Partner, UserProfile } from '../ty
 import Config from 'react-native-config';
 import { Platform } from 'react-native';
 
-
-// Configure base URL - replace with your actual API endpoint
-// Use 'http://localhost:5000/api' for iOS simulator
-// Use 'http://10.0.2.2:5000/api' for Android emulator
-//const API_BASE_URL = __DEV__ ? 'http://192.168.100.17:5000/api' : 'https://api.organicles.pk/v1';
-
-
 const DEV_API_BASE_URL =
   Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
 
-const API_BASE_URL =
-  (Config.API_BASE_URL || '').trim() ||
-  (__DEV__ ? DEV_API_BASE_URL : 'https://api.organicles.pk/v1');
+const rawApiUrl = Config.API_BASE_URL;
+const isValidUrl =
+  rawApiUrl &&
+  rawApiUrl !== 'undefined' &&
+  rawApiUrl !== 'null' &&
+  rawApiUrl.startsWith('http');
+
+const API_BASE_URL = isValidUrl
+  ? rawApiUrl.trim()
+  : __DEV__
+  ? DEV_API_BASE_URL
+  : 'https://api.organicles.pk/v1';
+
+console.log('[API] Base URL resolved to:', API_BASE_URL);
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -23,28 +28,10 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-export const heroBannerService = {
-  getAll: async () : Promise<ApiResponse<any>> => {
-    try{
-      const response = await apiClient.get('/hero-banners');
-      return { success: true, data: response.data };
-    }
-      catch (error: any) {
-        return { success : false, error: error.message};
-      }
-    }
-  };
 
-
-
-// Request interceptor for adding auth tokens
+// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Add authentication token if available
-    // const token = await SecureStorage.getItem('authToken');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
     return config;
   },
   (error) => {
@@ -52,15 +39,13 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Server responded with error
       console.error('API Error:', error.response.data);
     } else if (error.request) {
-      // Request made but no response
       console.error('Network Error:', error.request);
     } else {
       console.error('Error:', error.message);
@@ -68,6 +53,18 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Hero Banner Services
+export const heroBannerService = {
+  getAll: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.get('/hero-banners');
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  },
+};
 
 // Product Services
 export const productService = {
@@ -99,6 +96,7 @@ export const productService = {
   },
 };
 
+// Review Services
 export const reviewService = {
   getAll: async (): Promise<ApiResponse<Review[]>> => {
     try {
@@ -110,6 +108,7 @@ export const reviewService = {
   },
 };
 
+// Partner Services
 export const partnerService = {
   getAll: async (): Promise<ApiResponse<Partner[]>> => {
     try {
@@ -121,6 +120,7 @@ export const partnerService = {
   },
 };
 
+// User Services
 export const userService = {
   upsertProfile: async (profile: UserProfile): Promise<ApiResponse<any>> => {
     try {
@@ -142,11 +142,12 @@ export const userService = {
   },
 };
 
+// Order Services
 export const orderService = {
   create: async (orderData: Partial<Order>): Promise<ApiResponse<Order>> => {
     try {
       const response = await apiClient.post('/orders', orderData);
-      return { success: true, data: response.data }
+      return { success: true, data: response.data };
     } catch (error: any) {
       return { success: false, error: error.message };
     }

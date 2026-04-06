@@ -18,7 +18,7 @@ const BUNDLE_MAP: Record<string, { title: string; image: string; product: Produc
       name: "Men's Vitality Bundle",
       description: 'Complete vitality combo.',
       price: 3500,
-      images: ['https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x_u04v5l.webp'],
+      images: ['https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x_u04v5l.webp://192.168.100.17:5000/uploads/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x.webp'],
       category: 'Bundles',
       featured: true,
       bestSeller: true,
