@@ -1,20 +1,40 @@
-﻿const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require("@prisma/client");
 const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
+const fs = require("fs");
+fs.mkdirSync("/var/data", { recursive: true });
 
-const dbPath = path.resolve(__dirname, "dev.db");
+const rawPath = process.env.SQLITE_DB_PATH || path.resolve(__dirname, "dev.db");
 
 const adapter = new PrismaBetterSqlite3({
-  url: `file:${dbPath}`,
+  url: `file:${rawPath}`,
 });
 
 const prisma = new PrismaClient({ adapter });
-const ASSET_BASE_URL = process.env.ASSET_BASE_URL || "http://10.0.2.2:5000";
-const uploadUrl = (filename) => `${ASSET_BASE_URL}/uploads/${filename}`;
-
-async function main() {
-  console.log("ðŸŒ± Seeding database...");
+const cloudinaryUrls = {
+  "1770968814733-black-pepper.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770968814733-black-pepper_b5zfmf.jpg",
+  "1770968814757-brown-sugar.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770968814757-brown-sugar_om5cix.jpg",
+  "1770968814776-cardamom.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770968814776-cardamom_cskvyw.jpg",
+  "1770968814794-chia-seed.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1770968814794-chia-seed_bl2ybe.jpg",
+  "1770968814811-cinnamon.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1770968814811-cinnamon_vixibv.jpg",
+  "1770968814829-clove.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1770968814829-clove_gljvor.jpg",
+  "1770968814845-coconut-oil.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1770968814845-coconut-oil_fzodux.jpg",
+  "1770968814873-honey.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1770968814873-honey_zk2kd2.jpg",
+  "1770968814890-methi-dana.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1770968814890-methi-dana_nyq1qw.jpg",
+  "1770968814906-moringa.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614979/1770968814906-moringa_vbzjaj.jpg",
+  "1770968814923-olive-oil-2.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614979/1770968814923-olive-oil-2_nm2gr9.jpg",
+  "1770968814939-pink-salt.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614979/1770968814939-pink-salt_ms1zpa.jpg",
+  "1770968814956-shilajit.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1770968814956-shilajit_xwk508.jpg",
+  "1770968814977-spices-opt.-2.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1770968814994-turmeric_hvcbnp.jpg",
+  "1770968814994-turmeric.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1770968814994-turmeric_hvcbnp.jpg",
+  "1770969560167-desi-ghee.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614981/desi-ghee_oa8vm7.jpg",
+  "1770969560212-zero-pain-oil.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770969560212-zero-pain-oil_rcas9b.jpg",
+  "1770969560194-nashta.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614981/nashta_mddzr8.jpg",
+  "1770969560124-Vitaman.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614981/1770969560124-Vitaman_ml0abv.jpg",
+};
+const uploadUrl = (filename) => cloudinaryUrls[filename] || filename;async function main() {
+  console.log("🌱 Seeding database...");
 
   // Reset content tables for deterministic local seeds
   await prisma.product.deleteMany();
@@ -284,41 +304,70 @@ async function main() {
   });
 
   await prisma.partner.createMany({
-    data: [
-      {
-        name: "Organic Certification Board",
-        logo: "https://via.placeholder.com/100x50/2D5016/FFFFFF?text=OCB",
-        sortOrder: 1,
-        isActive: true,
-      },
-      {
-        name: "Natural Health Association",
-        logo: "https://via.placeholder.com/100x50/4A7C2B/FFFFFF?text=NHA",
-        sortOrder: 2,
-        isActive: true,
-      },
-      {
-        name: "Pure Foods Pakistan",
-        logo: "https://via.placeholder.com/100x50/2D5016/FFFFFF?text=PFP",
-        sortOrder: 3,
-        isActive: true,
-      },
-      {
-        name: "Wellness Council",
-        logo: "https://via.placeholder.com/100x50/4A7C2B/FFFFFF?text=WC",
-        sortOrder: 4,
-        isActive: true,
-      },
-      {
-        name: "Green Living Initiative",
-        logo: "https://via.placeholder.com/100x50/2D5016/FFFFFF?text=GLI",
-        sortOrder: 5,
-        isActive: true,
-      },
-    ],
-  });
+  data: [
+    {
+      name: "Partner 1",
+      logo: "https://res.cloudinary.com/dsaavzn5p/image/upload/f_jpg/v1773211691/l1_245x_hztmzx.avif",
+      sortOrder: 1,
+      isActive: true,
+    },
+    {
+      name: "Partner 2",
+      logo: "https://res.cloudinary.com/dsaavzn5p/image/upload/f_jpg/v1773211691/l2_245x_kk9ztp.avif",
+      sortOrder: 2,
+      isActive: true,
+    },
+    {
+      name: "Partner 3",
+      logo: "https://res.cloudinary.com/dsaavzn5p/image/upload/f_jpg/v1773211691/l4_245x_cxbkjs.avif",
+      sortOrder: 3,
+      isActive: true,
+    },
+    {
+      name: "Partner 4",
+      logo: "https://res.cloudinary.com/dsaavzn5p/image/upload/f_jpg/v1773211691/i5_245x_g3yafe.avif",
+      sortOrder: 4,
+      isActive: true,
+    },
+    {
+      name: "Partner 5",
+      logo: "https://res.cloudinary.com/dsaavzn5p/image/upload/f_jpg/v1773211691/i6_245x_rnfyjp.avif",
+      sortOrder: 5,
+      isActive: true,
+    },
+  ],
+});
+  await prisma.heroBanner.deleteMany();
+await prisma.heroBanner.createMany({
+  data: [
+    {
+      imageUrl: "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1771222572949-website_banner_1252_x_608_px_unnx6s.webp",
+      title: "Banner 1",
+      isActive: true,
+      sortOrder: 1,
+    },
+    {
+      imageUrl: "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614978/1771222573031-website_banner_1252_x_608_px_3_yrf5cb.webp",
+      title: "Banner 2",
+      isActive: true,
+      sortOrder: 2,
+    },
+    {
+      imageUrl: "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614979/1771222573087-zero_pain_oil_CB_lg4dyf.webp",
+      title: "Banner 3",
+      isActive: true,
+      sortOrder: 3,
+    },
+    {
+      imageUrl: "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614979/1771225384074-Vitaman_banner_v2_xzwme7.png",
+      title: "Banner 4",
+      isActive: true,
+      sortOrder: 4,
+    },
+  ],
+});
 
-  console.log("âœ… Seed completed");
+  console.log("✅ Seed completed");
 }
 
 main()
@@ -329,4 +378,6 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+
 
