@@ -28,11 +28,11 @@ import apiClient, {
 } from '../services/api';
 import { Product, Partner } from '../types';
 
-
 const { width } = Dimensions.get('window');
-const API_BASE = Config.API_BASE_URL 
-  ?? apiClient.defaults.baseURL 
+const API_BASE = Config.API_BASE_URL
+  ?? apiClient.defaults.baseURL
   ?? 'https://your-fallback-url.com';
+
 const HERO_SLIDES = [
   'https://picsum.photos/seed/organic-1/1290/1000',
   'https://picsum.photos/seed/organic-2/1290/1000',
@@ -44,22 +44,19 @@ const BUNDLES = [
   {
     id: 'bundle-1',
     title: "Men's Vitality Bundle",
-    image:
-      'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x_u04v5l.webp',
+    image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370797-Bundle01updated_313a7587-1b96-4c3d-889a-f3231a5bc4f9_1170x_u04v5l.webp',
     bundleId: 'bundle-1',
   },
   {
     id: 'bundle-2',
     title: 'Family Wellness Bundle',
-    image:
-      'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370821-Bundle05updated_1170x_dyztvj.webp',
+    image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370821-Bundle05updated_1170x_dyztvj.webp',
     bundleId: 'bundle-2',
   },
   {
     id: 'bundle-3',
     title: 'All in One Bundle',
-    image:
-      'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370841-Bundle06updated_1170x_w3ngju.webp',
+    image: 'https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614980/1771227370841-Bundle06updated_1170x_w3ngju.webp',
     bundleId: 'bundle-3',
   },
 ];
@@ -79,7 +76,6 @@ const HomeScreen = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productError, setProductError] = useState<string | null>(null);
-  const [productDebug, setProductDebug] = useState<string>('');
 
   // ── Partners ──────────────────────────────────────────────────
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -96,9 +92,7 @@ const HomeScreen = () => {
   const [activeCategory, setActiveCategory] = useState('Best Sellers');
   const [categoryBarSticky, setCategoryBarSticky] = useState(false);
 
-  // Map category name → y-offset in main scroll
   const sectionOffsets = useRef<{ [key: string]: number }>({});
-  // Height of everything above the category bar (hero + bundles section roughly)
   const categoryBarOffset = useRef(0);
 
   const toArray = <T,>(value: any, key?: string): T[] => {
@@ -106,15 +100,6 @@ const HomeScreen = () => {
     if (key && Array.isArray(value?.[key])) return value[key];
     if (Array.isArray(value?.data)) return value.data;
     return [];
-  };
-  const safeStringify = (value: any) => {
-    try {
-      const text = JSON.stringify(value, null, 2);
-      if (text.length > 900) return `${text.slice(0, 900)}\n...trimmed`;
-      return text;
-    } catch {
-      return '[unserializable]';
-    }
   };
 
   // ── Derived: grouped products ─────────────────────────────────
@@ -152,22 +137,10 @@ const HomeScreen = () => {
   };
 
   const loadProducts = async () => {
-    console.log('DEBUG Config:', {
-    API_BASE_URL: Config.API_BASE_URL,
-    ASSET_BASE_URL: Config.ASSET_BASE_URL,
-    apiClientBase: apiClient.defaults.baseURL,
-    productServiceType: typeof productService,
-    getAllType: typeof (productService as any)?.getAll,
-  });
     setLoadingProducts(true);
     setProductError(null);
     if (!productService || typeof (productService as any).getAll !== 'function') {
       setProductError('Products service unavailable.');
-      setProductDebug(
-        `loadProducts: service missing\n` +
-          `productService=${safeStringify(productService)}\n` +
-          `getAllType=${typeof (productService as any)?.getAll}`
-      );
       setLoadingProducts(false);
       return;
     }
@@ -175,34 +148,23 @@ const HomeScreen = () => {
       const res = await productService.getAll();
       if (!res.success || !res.data) {
         setProductError(res.error || 'Failed to load products.');
-        setProductDebug(
-          `loadProducts: success=${String(res.success)}\nerror=${res.error || 'n/a'}\nraw=${safeStringify(res)}`
-        );
         return;
       }
       const rows = toArray<Product>(res.data, 'products');
-      const successDebug = `loadProducts: success=true\nrows=${rows.length}\nraw=${safeStringify(res.data)}`;
-      setProductDebug(successDebug);
-      console.error(successDebug);
-
       const normalized = rows.map((p: Product) => ({
-  ...p,
-  images: Array.isArray(p.images)
-    ? p.images.map((img) => {
-        if (typeof img !== 'string') return img;
-        if (img.startsWith('http')) return img;
-        const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
-        return `${base}/${img.startsWith('/') ? img.slice(1) : img}`;
-      })
-    : p.images,
-}));
-setProducts(normalized);
+        ...p,
+        images: Array.isArray(p.images)
+          ? p.images.map((img) => {
+              if (typeof img !== 'string') return img;
+              if (img.startsWith('http')) return img;
+              const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+              return `${base}/${img.startsWith('/') ? img.slice(1) : img}`;
+            })
+          : p.images,
+      }));
       setProducts(normalized);
     } catch (e: any) {
       setProductError(e?.message || 'Something went wrong.');
-      const errorDebug = `loadProducts: threw\nmessage=${e?.message || 'n/a'}\nerror=${safeStringify(e)}`;
-      setProductDebug(errorDebug);
-      console.error(errorDebug);
     } finally {
       setLoadingProducts(false);
     }
@@ -273,7 +235,6 @@ setProducts(normalized);
     if (offset !== undefined) {
       mainScrollRef.current?.scrollTo({ y: offset, animated: true });
     }
-    // scroll category pill into view
     const idx = categoryTitles.indexOf(title);
     categoryScrollRef.current?.scrollTo({ x: idx * 110, animated: true });
   };
@@ -283,7 +244,6 @@ setProducts(normalized);
     const scrollY = e.nativeEvent.contentOffset.y;
     setCategoryBarSticky(scrollY >= categoryBarOffset.current);
 
-    // Find which section we're in
     const offsets = sectionOffsets.current;
     let current = categoryTitles[0];
     for (const title of categoryTitles) {
@@ -298,7 +258,7 @@ setProducts(normalized);
     }
   };
 
-  // ── Render category bar (shared) ──────────────────────────────
+  // ── Render category bar ───────────────────────────────────────
   const renderCategoryBar = () => (
     <View style={styles.categoryContainer}>
       <ScrollView
@@ -313,9 +273,7 @@ setProducts(normalized);
             style={[styles.categoryButton, activeCategory === title && styles.categoryButtonActive]}
             onPress={() => handleCategoryPress(title)}
           >
-            <Text
-              style={[styles.categoryText, activeCategory === title && styles.categoryTextActive]}
-            >
+            <Text style={[styles.categoryText, activeCategory === title && styles.categoryTextActive]}>
               {title}
             </Text>
           </TouchableOpacity>
@@ -337,7 +295,6 @@ setProducts(normalized);
         onMenuPress={openMenu}
       />
 
-      {/* Sticky category bar — sits above scroll, shown when scrolled past hero */}
       {categoryBarSticky && renderCategoryBar()}
 
       {/* Sidebar */}
@@ -387,26 +344,15 @@ setProducts(normalized);
               </View>
             ))}
           </ScrollView>
-          <View style={styles.heroOverlay}>
-          </View>
+          <View style={styles.heroOverlay} />
         </View>
 
-        {/* ── Inline category bar (non-sticky, measured here) ── */}
-        <View
-          onLayout={(e) => {
-            categoryBarOffset.current = e.nativeEvent.layout.y;
-          }}
-        >
+        {/* ── Inline category bar ── */}
+        <View onLayout={(e) => { categoryBarOffset.current = e.nativeEvent.layout.y; }}>
           {!categoryBarSticky && renderCategoryBar()}
         </View>
 
         {/* ── Product sections ── */}
-       {__DEV__ && productDebug ? (
-  <View style={styles.debugBox}>
-    <Text style={styles.debugTitle}>Debug (Products)</Text>
-    <Text style={styles.debugText}>{productDebug}</Text>
-  </View>
-) : null}
         {loadingProducts ? (
           <View style={styles.statusContainer}>
             <ActivityIndicator size="small" color={COLORS.primary} />
@@ -423,9 +369,7 @@ setProducts(normalized);
           categoryGroups.map(({ title, data }) => (
             <View
               key={title}
-              onLayout={(e) => {
-                sectionOffsets.current[title] = e.nativeEvent.layout.y;
-              }}
+              onLayout={(e) => { sectionOffsets.current[title] = e.nativeEvent.layout.y; }}
             >
               <Text style={styles.sectionTitle}>{title}</Text>
               <View style={styles.productGrid}>
@@ -433,10 +377,7 @@ setProducts(normalized);
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onPress={() => {
-                      console.error(`Home: navigate ProductDetail id=${product?.id}`);
-                      navigation.navigate('ProductDetail', { productId: product.id });
-                    }}
+                    onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
                   />
                 ))}
               </View>
@@ -494,7 +435,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollView: { flex: 1 },
 
-  // Hero
   heroSection: {
     width: '100%',
     aspectRatio: 1252 / 650,
@@ -511,9 +451,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
-  logoImage: { width: 100, height: 50 },
 
-  // Category bar
   categoryContainer: {
     backgroundColor: COLORS.surface,
     paddingVertical: SPACING.sm,
@@ -537,7 +475,6 @@ const styles = StyleSheet.create({
   },
   categoryTextActive: { color: COLORS.white },
 
-  // Sections
   section: { paddingVertical: SPACING.md },
   sectionTitle: {
     fontSize: FONT_SIZES.xl,
@@ -554,7 +491,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
 
-  // Product grid
   productGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -563,7 +499,6 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.md,
   },
 
-  // Status
   statusContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -579,7 +514,6 @@ const styles = StyleSheet.create({
   },
   retryText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.primary },
 
-  // Bundles
   bundleGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -611,7 +545,6 @@ const styles = StyleSheet.create({
   },
   bundleButtonText: { color: COLORS.white, fontWeight: FONT_WEIGHTS.bold, fontSize: FONT_SIZES.sm },
 
-  // Partners
   marqueeContainer: { height: 80, marginTop: SPACING.sm, overflow: 'hidden' },
   marqueeContent: { flexDirection: 'row', paddingLeft: SPACING.md },
   partnerCard: {
@@ -628,7 +561,6 @@ const styles = StyleSheet.create({
 
   footer: { height: SPACING.xl },
 
-  // Drawer
   drawerRoot: { flex: 1, flexDirection: 'row' },
   drawerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
   drawerPanel: {
@@ -651,20 +583,6 @@ const styles = StyleSheet.create({
   drawerPhone: { marginTop: 4, color: COLORS.textSecondary },
   drawerItem: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#eee' },
   drawerItemText: { fontSize: 16, color: COLORS.textPrimary, fontWeight: '600' },
-
-  // Debug
-  debugBox: {
-    marginHorizontal: SPACING.md,
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.sm,
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: '#fff5e6',
-    borderWidth: 1,
-    borderColor: '#f2c48d',
-  },
-  debugTitle: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: '#8a5a12' },
-  debugText: { marginTop: 6, fontSize: 11, color: '#5c3a06' },
 });
 
 export default HomeScreen;

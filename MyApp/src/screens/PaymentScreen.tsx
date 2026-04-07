@@ -219,8 +219,8 @@ const payment = paymentResult.data;
       dispatch(clearCart());
 const { checkout_url } = paymentResult.data;
 navigation.navigate('PaymentWebView', {
-  checkoutUrl: ' https://google.com',
-  orderId: 'test-123',
+  checkoutUrl:checkout_url,
+  orderId:  payment.order.id,
 });    } catch (error) {
       console.error(error);
       Alert.alert('Payment Failed', 'Unable to process payment. Please try again.');
