@@ -43,7 +43,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Address" component={AddressScreen} />
         <Stack.Screen name="Payment" component={PaymentScreen} />
         <Stack.Screen name="BundleDetail" component={BundleDetail} />
-        <Stack.Screen name="PaymentWebView" component={PaymentWebViewScreen} />
+        <Stack.Screen name="PaymentWebView" component={PaymentWebViewScreen} options={{ headerShown: false }} />
 
         <Stack.Screen 
           name="OrderSuccess" 

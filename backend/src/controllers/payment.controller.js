@@ -1,3 +1,5 @@
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 const prisma = require('../prisma');
 const crypto = require('crypto'); // built-in Node.js — no install needed
 
@@ -98,15 +100,25 @@ async function createDialogPaySession({
     body: JSON.stringify(body),
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (parseErr) {
+    console.error('Dialog Pay response JSON parse error:', parseErr);
+    throw new Error(`Dialog Pay invalid JSON response (status ${response.status})`);
+  }
 
   // Step 6: Check is_success
   if (!response.ok || !data.is_success) {
+    console.error('Dialog Pay session error:', {
+      status: response.status,
+      statusText: response.statusText,
+      data,
+    });
     throw new Error(
       `Dialog Pay error ${response.status}: ${JSON.stringify(data)}`
     );
   }
-
   return data; // { checkout_url, checkout_card_url, ... }
 }
 
@@ -215,14 +227,30 @@ exports.createOrderAndPayment = async (req, res) => {
     });
 
     // ── Step 3: Return checkout URL to the app ───────────────────────────
+    // Some gateways return different key names; normalize defensively.
+    const checkoutUrl =
+      dialogSession?.checkout_url ||
+      dialogSession?.checkoutUrl ||
+      dialogSession?.data?.checkout_url ||
+      dialogSession?.data?.checkoutUrl;
+
+    if (!checkoutUrl) {
+      console.error('Dialog Pay session missing checkout URL:', dialogSession);
+      return res.status(502).json({
+        success: false,
+        message: 'Dialog Pay did not return a checkout URL',
+        dialogSession,
+      });
+    }
+
     return res.status(201).json({
       success: true,
       txnRef,
       order: result.order,
       payment: result.payment,
       // App should open this URL in a browser/WebView
-      checkout_url: dialogSession.checkout_url,
-      checkout_card_url: dialogSession.checkout_card_url,
+      checkout_url: checkoutUrl,
+      checkout_card_url: dialogSession?.checkout_card_url || dialogSession?.checkoutCardUrl,
     });
 
   } catch (err) {
@@ -289,3 +317,10 @@ exports.paymentNotify = async (req, res) => {
   // TODO: verify signature if Dialog Pay provides one
   return res.status(200).json({ received: true });
 };
+
+
+
+
+
+
+

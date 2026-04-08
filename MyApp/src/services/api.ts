@@ -23,7 +23,7 @@ console.log('[API] Base URL resolved to:', API_BASE_URL);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -32,23 +32,42 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+    if (config.data) {
+      console.log('[API Request] Data:', JSON.stringify(config.data, null, 2));
+    }
     return config;
   },
   (error) => {
+    console.error('[API Request Error]', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API Response] ${response.status} ${response.config.url}`);
+    console.log('[API Response] Data:', JSON.stringify(response.data, null, 2));
+    return response;
+  },
   (error) => {
     if (error.response) {
-      console.error('API Error:', error.response.data);
+      console.error('[API Error Response]', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        url: error.config?.url,
+        method: error.config?.method,
+      });
     } else if (error.request) {
-      console.error('Network Error:', error.request);
+      console.error('[API Network Error] No response received:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        message: error.message,
+      });
     } else {
-      console.error('Error:', error.message);
+      console.error('[API Error]', error.message);
     }
     return Promise.reject(error);
   }
@@ -61,6 +80,7 @@ export const heroBannerService = {
       const response = await apiClient.get('/hero-banners');
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[heroBannerService.getAll] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -73,6 +93,7 @@ export const productService = {
       const response = await apiClient.get('/products');
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[productService.getAll] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -82,6 +103,7 @@ export const productService = {
       const response = await apiClient.get(`/products/${id}`);
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error(`[productService.getById] Error for id ${id}:`, error.message);
       return { success: false, error: error.message };
     }
   },
@@ -91,6 +113,7 @@ export const productService = {
       const response = await apiClient.get('/products/featured');
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[productService.getFeatured] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -103,6 +126,7 @@ export const reviewService = {
       const response = await apiClient.get('/reviews');
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[reviewService.getAll] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -115,6 +139,7 @@ export const partnerService = {
       const response = await apiClient.get('/partners');
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[partnerService.getAll] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -127,6 +152,7 @@ export const userService = {
       const response = await apiClient.post('/users/profile', profile);
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[userService.upsertProfile] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -137,6 +163,7 @@ export const userService = {
       const response = await apiClient.get(`/users/profile/${encodedPhone}`);
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error(`[userService.getProfileByPhone] Error for phone ${phone}:`, error.message);
       return { success: false, error: error.message };
     }
   },
@@ -149,6 +176,7 @@ export const orderService = {
       const response = await apiClient.post('/orders', orderData);
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[orderService.create] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -158,6 +186,7 @@ export const orderService = {
       const response = await apiClient.get(`/orders/${id}`);
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error(`[orderService.getById] Error for id ${id}:`, error.message);
       return { success: false, error: error.message };
     }
   },
@@ -167,6 +196,7 @@ export const orderService = {
       const response = await apiClient.get('/orders/user');
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[orderService.getUserOrders] Error:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -179,21 +209,66 @@ export const orderService = {
   }): Promise<ApiResponse<any>> => {
     try {
       const response = await apiClient.post('/orders/cod', orderData);
+      console.log('[createCODOrder] Success:', response.data);
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[createCODOrder] Error:', error.message);
+      if (error.response) {
+        console.error('[createCODOrder] Error response:', error.response.data);
+      }
       return { success: false, error: error.message };
     }
   },
 };
 
-// Payment Services
+// Payment Services - CORRECTED ENDPOINT
 export const paymentService = {
   createOrderAndPayment: async (paymentData: any): Promise<ApiResponse<any>> => {
     try {
+      console.log('[PaymentService] Creating order and payment...');
+      console.log('[PaymentService] Endpoint: /payments/order');
+      console.log('[PaymentService] Payment Data:', JSON.stringify(paymentData, null, 2));
+      
       const response = await apiClient.post('/payments/order', paymentData);
-      return { success: true, data: response.data };
+      
+      console.log('[PaymentService] Response status:', response.status);
+      console.log('[PaymentService] Response data:', JSON.stringify(response.data, null, 2));
+      
+      if (response.data) {
+        console.log('[PaymentService] Success - checkout_url:', response.data.checkout_url);
+        console.log('[PaymentService] Success - order:', response.data.order);
+        console.log('[PaymentService] Success - payment:', response.data.payment);
+      }
+      
+      return { 
+        success: true, 
+        data: response.data 
+      };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('[PaymentService] Error creating payment:');
+      
+      if (error.response) {
+        console.error('[PaymentService] Response status:', error.response.status);
+        console.error('[PaymentService] Response data:', JSON.stringify(error.response.data, null, 2));
+        
+        return { 
+          success: false, 
+          error: error.response.data?.message || error.response.data?.error || 'Payment service error',
+          data: error.response.data 
+        };
+      } else if (error.request) {
+        console.error('[PaymentService] No response received:', error.request);
+        return { 
+          success: false, 
+          error: 'Network error - no response from server' 
+        };
+      } else {
+        console.error('[PaymentService] Request setup error:', error.message);
+        return { 
+          success: false, 
+          error: error.message 
+        };
+      }
     }
   },
 };
