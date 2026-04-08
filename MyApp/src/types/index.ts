@@ -40,10 +40,8 @@ export interface Address {
 
 // Payment Types
 export enum PaymentMethod {
-  CARD = 'CARD',
   COD = 'COD',
-  WALLET = 'WALLET',
-}
+ONLINE = 'ONLINE',}
 export enum WalletProvider {
   JAZZCASH = 'JAZZCASH',
   EASYPaisa = 'EASYPaisa',

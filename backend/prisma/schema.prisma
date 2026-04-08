@@ -10,6 +10,7 @@ datasource db {
 
 model Order {
   id              String   @id @default(cuid())
+   orderId          String   @unique  // Add this field
   items           String
   shippingAddress String
   totalAmount     Float

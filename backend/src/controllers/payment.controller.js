@@ -13,12 +13,6 @@ const DIALOG_PASSWORD = process.env.DIALOG_PASSWORD;
 const DIALOG_PRIVATE_KEY = process.env.DIALOG_PRIVATE_KEY; // used as HMAC secret
 const DIALOG_PUBLIC_KEY = process.env.DIALOG_PUBLIC_KEY;   // sent in x-signature-256 header
 
-// ─── JazzCash config (direct wallet) ──────────────────────────────────────
-const JAZZCASH_BASE_URL = process.env.JAZZCASH_BASE_URL || 'https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/';
-const JAZZCASH_MERCHANT_ID = process.env.JAZZCASH_MERCHANT_ID;
-const JAZZCASH_PASSWORD = process.env.JAZZCASH_PASSWORD;
-const JAZZCASH_INTEGRITY_SALT = process.env.JAZZCASH_INTEGERITY_SALT; // keep your spelling from .env
-
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 /**
@@ -54,7 +48,7 @@ function buildSignatureHeader() {
 
 /**
  * Call Dialog Pay Hosted Checkout API.
- * Returns { checkout_url, checkout_card_url } on success.
+ * Returns { checkout_url } on success.
  */
 async function createDialogPaySession({
   orderId,
@@ -119,13 +113,14 @@ async function createDialogPaySession({
       `Dialog Pay error ${response.status}: ${JSON.stringify(data)}`
     );
   }
-  return data; // { checkout_url, checkout_card_url, ... }
+  return data; // { checkout_url, ... }
 }
 
 // ─── COD Order ────────────────────────────────────────────────────────────
 
 exports.createCODOrder = async (req, res) => {
   try {
+    // FIX: Accept orderId from frontend or generate if not provided
     const { orderId, items, shippingAddress, totalAmount } = req.body;
 
     if (!items || !shippingAddress || !totalAmount) {
@@ -134,6 +129,7 @@ exports.createCODOrder = async (req, res) => {
 
     const order = await prisma.order.create({
       data: {
+        orderId: orderId || `ORD-${Date.now()}`, // Use provided or generate
         items: JSON.stringify(items),
         shippingAddress: JSON.stringify(shippingAddress),
         totalAmount,
@@ -149,28 +145,19 @@ exports.createCODOrder = async (req, res) => {
   }
 };
 
-// ─── Card / Wallet Order (Dialog Pay Hosted Checkout) ────────────────────
+// ─── Online Payment (Dialog Pay Hosted Checkout) ────────────────────
 
-exports.createOrderAndPayment = async (req, res) => {
+exports.createOnlinePayment = async (req, res) => {
   try {
     const {
       items,
       shippingAddress,
       totalAmount,
-      paymentMethod,   // 'CARD' | 'WALLET'
-      walletPhone,
-      walletProvider,
     } = req.body;
 
     // ── Validation ──────────────────────────────────────────────────────
-    if (!items || !shippingAddress || !totalAmount || !paymentMethod) {
+    if (!items || !shippingAddress || !totalAmount) {
       return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    if (paymentMethod === 'WALLET' && (!walletPhone || !walletProvider)) {
-      return res.status(400).json({
-        message: 'Wallet provider and phone number are required',
-      });
     }
 
     // ── Step 1: Save order to DB ─────────────────────────────────────────
@@ -179,23 +166,22 @@ exports.createOrderAndPayment = async (req, res) => {
     const result = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
+          orderId: `ORD-${Date.now()}`, // Generate unique order ID
           items: JSON.stringify(items),
           shippingAddress: JSON.stringify(shippingAddress),
           totalAmount,
           status: 'PENDING',
-          paymentMethod,             // ✅ fixed: was hardcoded ' WALLET'
+          paymentMethod: 'ONLINE',
         },
       });
 
       const payment = await tx.payment.create({
         data: {
           orderId: order.id,
-          method: paymentMethod,
+          method: 'ONLINE',
           amount: totalAmount,
           status: 'INITIATED',
           txnRef,
-          walletPhone: paymentMethod === 'WALLET' ? walletPhone : null,
-          walletProvider: paymentMethod === 'WALLET' ? walletProvider : null,
         },
       });
 
@@ -206,7 +192,7 @@ exports.createOrderAndPayment = async (req, res) => {
     const BASE_APP_URL = process.env.APP_URL || 'http://localhost:5000';
 
     const dialogSession = await createDialogPaySession({
-      orderId: result.order.id.toString(),   // alphanumeric order ref
+      orderId: result.order.orderId, // Use the orderId field
       amount: totalAmount,
       currency: 'PKR',
       customer: {
@@ -227,7 +213,6 @@ exports.createOrderAndPayment = async (req, res) => {
     });
 
     // ── Step 3: Return checkout URL to the app ───────────────────────────
-    // Some gateways return different key names; normalize defensively.
     const checkoutUrl =
       dialogSession?.checkout_url ||
       dialogSession?.checkoutUrl ||
@@ -248,9 +233,7 @@ exports.createOrderAndPayment = async (req, res) => {
       txnRef,
       order: result.order,
       payment: result.payment,
-      // App should open this URL in a browser/WebView
-      checkout_url: checkoutUrl,
-      checkout_card_url: dialogSession?.checkout_card_url || dialogSession?.checkoutCardUrl,
+      checkout_url: checkoutUrl, // App should open this URL in a WebView
     });
 
   } catch (err) {
@@ -317,10 +300,3 @@ exports.paymentNotify = async (req, res) => {
   // TODO: verify signature if Dialog Pay provides one
   return res.status(200).json({ received: true });
 };
-
-
-
-
-
-
-

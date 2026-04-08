@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
-import { WalletProvider } from '../types';
 import {
   View,
   Text,
@@ -37,7 +36,6 @@ const Icon = ({ name, size = 24, color = '#000' }: any) => {
     'receipt-outline': '🧾',
     'card-outline': '💳',
     'cash-outline': '💵',
-    'wallet': '👛',
     'shield-checkmark': '🔒',
     'checkmark': '✓',
     'sync': '⟳',
@@ -61,10 +59,6 @@ const PaymentScreen = () => {
     useState<PaymentMethod | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(1));
-  const [showWalletModal, setShowWalletModal] = useState(false);
-  const [walletPhone, setWalletPhone] = useState('');
-  const [walletProvider, setWalletProvider] =
-    useState<WalletProvider | null>(null);
 
   const animateSelection = () => {
     Animated.sequence([
@@ -83,53 +77,83 @@ const PaymentScreen = () => {
 
   const handleSelectPayment = (method: PaymentMethod) => {
     setSelectedPaymentMethod(method);
-    if (method === PaymentMethod.WALLET) {
-      setShowWalletModal(true);
-    }
     animateSelection();
   };
 
- const handlePlaceOrder = async () => {
-  // Validate wallet details if wallet is selected
-  if (selectedPaymentMethod === PaymentMethod.WALLET) {
-    if (!walletProvider || !walletPhone || walletPhone.length !== 11) {
-      Alert.alert(
-        'Wallet Details Required',
-        'Please select wallet provider and enter a valid 11-digit mobile number'
-      );
+  const handlePlaceOrder = async () => {
+    // Validate payment method
+    if (!selectedPaymentMethod) {
+      Alert.alert('Payment Method Required', 'Please select a payment method to continue');
       return;
     }
-  }
 
-  // Validate payment method
-  if (!selectedPaymentMethod) {
-    Alert.alert('Payment Method Required', 'Please select a payment method to continue');
-    return;
-  }
+    // Validate address
+    if (!selectedAddress) {
+      Alert.alert('Address Missing', 'Please add a delivery address');
+      return;
+    }
 
-  // Validate address
-  if (!selectedAddress) {
-    Alert.alert('Address Missing', 'Please add a delivery address');
-    return;
-  }
+    // Validate cart is not empty
+    if (cart.items.length === 0) {
+      Alert.alert('Cart Empty', 'Please add items to your cart');
+      return;
+    }
 
-  // Validate cart is not empty
-  if (cart.items.length === 0) {
-    Alert.alert('Cart Empty', 'Please add items to your cart');
-    return;
-  }
+    setIsProcessing(true);
 
-  setIsProcessing(true);
+    try {
+      // Handle COD payment
+      if (selectedPaymentMethod === PaymentMethod.COD) {
+        const orderId = `ORD-${Date.now()}`;
+        
+        const codResult = await orderService.createCODOrder({
+          orderId,
+          items: cart.items.map(item => ({
+            productId: item.product.id,
+            name: item.product.name,
+            price: Number(item.product.price),
+            quantity: Number(item.quantity),
+            image: item.product.images?.[0] || '',
+          })),
+          shippingAddress: {
+            fullName: selectedAddress.fullName,
+            email: selectedAddress.email,
+            phone: selectedAddress.phone,
+            addressLine1: selectedAddress.addressLine1,
+            addressLine2: selectedAddress.addressLine2 || '',
+            city: selectedAddress.city,
+            state: selectedAddress.state,
+            zipCode: selectedAddress.zipCode,
+            country: 'Pakistan',
+          },
+          totalAmount: Number(cart.totalPrice),
+        });
 
-  try {
-    // Handle COD payment
-    if (selectedPaymentMethod === PaymentMethod.COD) {
-      const orderId = `ORD-${Date.now()}`;
-      
-      const codResult = await orderService.createCODOrder({
-        orderId,
+        if (!codResult.success || !codResult.data?.order) {
+          throw new Error(codResult.error || 'Failed to save COD order to database');
+        }
+
+        dispatch(
+          createOrder({
+            id: codResult.data.order.id,
+            items: cart.items,
+            shippingAddress: selectedAddress,
+            paymentInfo: { method: selectedPaymentMethod as PaymentMethod },
+            totalAmount: cart.totalPrice,
+            status: OrderStatus.PENDING,
+            createdAt: new Date().toISOString(),
+          })
+        );
+
+        dispatch(clearCart());
+        navigation.replace('OrderSuccess', { orderId: codResult.data.order.id });
+        return;
+      }
+
+      // Handle ONLINE payment (Dialog Pay)
+      const paymentPayload = {
         items: cart.items.map(item => ({
-          productId: item.product.id,
+          id: item.product.id,
           name: item.product.name,
           price: Number(item.product.price),
           quantity: Number(item.quantity),
@@ -144,144 +168,94 @@ const PaymentScreen = () => {
           city: selectedAddress.city,
           state: selectedAddress.state,
           zipCode: selectedAddress.zipCode,
-          country: 'Pakistan',
         },
         totalAmount: Number(cart.totalPrice),
-      });
+      };
 
-      if (!codResult.success || !codResult.data?.order) {
-        throw new Error(codResult.error || 'Failed to save COD order to database');
+      console.log('📤 Sending payment payload:', JSON.stringify(paymentPayload, null, 2));
+
+      const paymentResult = await paymentService.createOnlinePayment(paymentPayload);
+
+      console.log('📥 Full payment response:', JSON.stringify(paymentResult, null, 2));
+
+      if (!paymentResult.success || !paymentResult.data) {
+        throw new Error(paymentResult.error || 'Payment request failed');
       }
 
+      // Extract data from response
+      const checkout_url = paymentResult.data.checkout_url;
+      const responseOrder = paymentResult.data.order;
+      const txnRef = paymentResult.data.txnRef;
+
+      console.log('🔗 checkout_url:', checkout_url);
+      console.log('📦 Order ID:', responseOrder?.id);
+      console.log('💳 Transaction Ref:', txnRef);
+
+      // Update Redux with payment info
+      dispatch(
+        setPaymentInfo({
+          method: PaymentMethod.ONLINE,
+          transactionId: txnRef,
+        })
+      );
+
+      // Create order in Redux
       dispatch(
         createOrder({
-          id: codResult.data.order.id,
+          id: responseOrder?.id?.toString() || `ORD-${Date.now()}`,
           items: cart.items,
           shippingAddress: selectedAddress,
-          paymentInfo: { method: selectedPaymentMethod as PaymentMethod },
+          paymentInfo: {
+            method: PaymentMethod.ONLINE,
+            transactionId: txnRef,
+          },
           totalAmount: cart.totalPrice,
-          status: OrderStatus.PENDING,
+          status: OrderStatus.PROCESSING,
           createdAt: new Date().toISOString(),
         })
       );
 
+      // Clear cart
       dispatch(clearCart());
-      navigation.replace('OrderSuccess', { orderId: codResult.data.order.id });
-      return;
+
+      // Navigate to PaymentWebView with the checkout_url
+      if (checkout_url) {
+        console.log('✅ Navigating to PaymentWebView with URL:', checkout_url);
+        navigation.navigate('PaymentWebView', {
+          checkoutUrl: checkout_url,
+          orderId: responseOrder?.id?.toString() || `ORD-${Date.now()}`,
+        });
+      } else {
+        console.error('❌ No checkout_url in response');
+        Alert.alert(
+          'Payment Gateway Error',
+          'Unable to initialize payment gateway. Please try again.',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Payment Error:', error);
+      
+      let errorMessage = 'Unable to process payment. Please try again.';
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        errorMessage = errorData.message || errorData.error || errorMessage;
+        console.error('Error response data:', JSON.stringify(errorData, null, 2));
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        errorMessage = 'No response from server. Please check your connection.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Payment Failed', errorMessage);
+    } finally {
+      setIsProcessing(false);
     }
+  };
 
-    // Handle CARD or WALLET payment
-    const paymentPayload: any = {
-      items: cart.items.map(item => ({
-        id: item.product.id,
-        name: item.product.name,
-        price: Number(item.product.price),
-        quantity: Number(item.quantity),
-        image: item.product.images?.[0] || '',
-      })),
-      shippingAddress: {
-        fullName: selectedAddress.fullName,
-        email: selectedAddress.email,
-        phone: selectedAddress.phone,
-        addressLine1: selectedAddress.addressLine1,
-        addressLine2: selectedAddress.addressLine2 || '',
-        city: selectedAddress.city,
-        state: selectedAddress.state,
-        zipCode: selectedAddress.zipCode,
-      },
-      totalAmount: Number(cart.totalPrice),
-      paymentMethod: selectedPaymentMethod,
-    };
-
-    // Add wallet details if payment method is WALLET
-    if (selectedPaymentMethod === PaymentMethod.WALLET) {
-      paymentPayload.walletPhone = walletPhone;
-      paymentPayload.walletProvider = walletProvider;
-    }
-
-    console.log('📤 Sending payment payload:', JSON.stringify(paymentPayload, null, 2));
-
-    const paymentResult = await paymentService.createOrderAndPayment(paymentPayload);
-
-    console.log('📥 Full payment response:', JSON.stringify(paymentResult, null, 2));
-
-    if (!paymentResult.success || !paymentResult.data) {
-      throw new Error(paymentResult.error || 'Payment request failed');
-    }
-
-    // Extract data from response
-    const checkout_url = paymentResult.data.checkout_url;
-    const responseOrder = paymentResult.data.order;
-    const txnRef = paymentResult.data.txnRef;
-
-    console.log('🔗 checkout_url:', checkout_url);
-    console.log('📦 Order ID:', responseOrder?.id);
-    console.log('💳 Transaction Ref:', txnRef);
-
-    // Update Redux with payment info
-    dispatch(
-      setPaymentInfo({
-        method: selectedPaymentMethod as PaymentMethod,
-        transactionId: txnRef,
-      })
-    );
-
-    // Create order in Redux
-    dispatch(
-      createOrder({
-        id: responseOrder?.id?.toString() || `ORD-${Date.now()}`,
-        items: cart.items,
-        shippingAddress: selectedAddress,
-        paymentInfo: {
-          method: selectedPaymentMethod as PaymentMethod,
-          transactionId: txnRef,
-        },
-        totalAmount: cart.totalPrice,
-        status: OrderStatus.PROCESSING,
-        createdAt: new Date().toISOString(),
-      })
-    );
-
-    // Clear cart
-    dispatch(clearCart());
-
-    // Navigate to PaymentWebView with the checkout_url
-    if (checkout_url) {
-      console.log('✅ Navigating to PaymentWebView with URL:', checkout_url);
-      navigation.navigate('PaymentWebView', {
-        checkoutUrl: checkout_url,
-        orderId: responseOrder?.id?.toString() || `ORD-${Date.now()}`,
-      });
-    } else {
-      console.error('❌ No checkout_url in response');
-      Alert.alert(
-        'Payment Gateway Error',
-        'Unable to initialize payment gateway. Please try again.',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
-    }
-    
-  } catch (error: any) {
-    console.error('❌ Payment Error:', error);
-    
-    let errorMessage = 'Unable to process payment. Please try again.';
-    
-    if (error.response?.data) {
-      const errorData = error.response.data;
-      errorMessage = errorData.message || errorData.error || errorMessage;
-      console.error('Error response data:', JSON.stringify(errorData, null, 2));
-    } else if (error.request) {
-      console.error('No response received:', error.request);
-      errorMessage = 'No response from server. Please check your connection.';
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-    
-    Alert.alert('Payment Failed', errorMessage);
-  } finally {
-    setIsProcessing(false);
-  }
-};
   const PaymentOption = ({
     method,
     title,
@@ -412,19 +386,11 @@ const PaymentScreen = () => {
           />
 
           <PaymentOption
-            method={PaymentMethod.WALLET}
-            title="Mobile Wallet"
-            subtitle="JazzCash / EasyPaisa"
-            icon="wallet"
-            gradient={['#8B5CF6', '#7C3AED']}
-          />
-
-          <PaymentOption
-            method={PaymentMethod.CARD}
-            title="Credit / Debit Card"
-            subtitle="Visa, Mastercard, etc."
+            method={PaymentMethod.ONLINE}
+            title="Online Payment"
+            subtitle="Pay securely via card or wallet"
             icon="card-outline"
-            gradient={['#F59E0B', '#D97706']}
+            gradient={['#6366F1', '#4F46E5']}
           />
         </View>
 
@@ -477,115 +443,6 @@ const PaymentScreen = () => {
           </GradientView>
         </TouchableOpacity>
       </View>
-
-      {/* JazzCash/EasyPaisa Number Modal */}
-      <Modal
-        visible={showWalletModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
-          setWalletPhone('');
-          setWalletProvider(null);
-          setShowWalletModal(false);
-          setSelectedPaymentMethod(null);
-        }}
-      >
-        <TouchableWithoutFeedback
-          onPress={() => {
-            setWalletPhone('');
-            setWalletProvider(null);
-            setShowWalletModal(false);
-            setSelectedPaymentMethod(null);
-          }}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.modalBox}>
-                <Text style={styles.modalTitle}>Enter Mobile Wallet Number</Text>
-                <Text style={styles.modalSubtitle}>
-                  Please enter your 11-digit mobile number (JazzCash/EasyPaisa)
-                </Text>
-                <View style={styles.walletProviderRow}>
-                  <TouchableOpacity
-                    style={[
-                      styles.walletProviderOption,
-                      walletProvider === WalletProvider.JAZZCASH &&
-                        styles.walletProviderOptionSelected,
-                    ]}
-                    onPress={() => setWalletProvider(WalletProvider.JAZZCASH)}
-                  >
-                    <Text
-                      style={[
-                        styles.walletProviderText,
-                        walletProvider === WalletProvider.JAZZCASH &&
-                          styles.walletProviderTextSelected,
-                      ]}
-                    >
-                      JazzCash
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.walletProviderOption,
-                      walletProvider === WalletProvider.EASYPaisa &&
-                        styles.walletProviderOptionSelected,
-                    ]}
-                    onPress={() => setWalletProvider(WalletProvider.EASYPaisa)}
-                  >
-                    <Text
-                      style={[
-                        styles.walletProviderText,
-                        walletProvider === WalletProvider.EASYPaisa &&
-                          styles.walletProviderTextSelected,
-                      ]}
-                    >
-                      EasyPaisa
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="03XXXXXXXXX"
-                  placeholderTextColor="#9CA3AF"
-                  value={walletPhone}
-                  onChangeText={setWalletPhone}
-                  keyboardType="phone-pad"
-                  maxLength={11}
-                  autoFocus
-                />
-                <View style={styles.modalActions}>
-                  <TouchableOpacity
-                    style={styles.modalCancel}
-                    onPress={() => {
-                      setWalletPhone('');
-                      setWalletProvider(null);
-                      setShowWalletModal(false);
-                      setSelectedPaymentMethod(null);
-                    }}
-                  >
-                    <Text style={styles.modalCancelText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.modalConfirm}
-                    onPress={() => {
-                      if (walletProvider && walletPhone.length === 11) {
-                        setShowWalletModal(false);
-                      } else {
-                        Alert.alert(
-                          'Missing Details',
-                          'Please select wallet provider and enter a valid 11-digit number'
-                        );
-                      }
-                    }}
-                  >
-                    <Text style={styles.modalConfirmText}>Confirm</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
     </View>
   );
 };
@@ -801,99 +658,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     marginHorizontal: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    width: '85%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  walletProviderRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  walletProviderOption: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  walletProviderOptionSelected: {
-    borderColor: '#6366F1',
-    backgroundColor: '#EEF2FF',
-  },
-  walletProviderText: {
-    color: '#1F2937',
-    fontWeight: '600',
-  },
-  walletProviderTextSelected: {
-    color: '#4F46E5',
-  },
-  modalInput: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 18,
-    color: '#1F2937',
-    textAlign: 'center',
-    letterSpacing: 4,
-    marginBottom: 24,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalCancel: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  modalConfirm: {
-    flex: 1,
-    backgroundColor: '#6366F1',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    color: '#6B7280',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  modalConfirmText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
   },
 });
 
