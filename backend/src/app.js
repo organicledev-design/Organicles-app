@@ -33,18 +33,7 @@ app.use(limiter);
 
 // CORS
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (!origin) {
-    res.header("Access-Control-Allow-Origin", "*");
-  } else if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Vary", "Origin");
-  } else {
-    return res.status(403).json({
-      success: false,
-      message: "CORS origin denied",
-    });
-  }
+  res.header("Access-Control-Allow-Origin", "*");
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
@@ -52,7 +41,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
 // Routes
 app.use("/api/orders", require("./routes/order.routes"));
 app.use("/api/payments", require("./routes/payment.routes"));
