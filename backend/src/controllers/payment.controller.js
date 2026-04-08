@@ -168,7 +168,6 @@ exports.createOrderAndPayment = async (req, res) => {
     const result = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
-          orderId: txnRef,                        // ← added
           items: JSON.stringify(items),
           shippingAddress: JSON.stringify(shippingAddress),
           totalAmount,
