@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
 import {
   View,
   Text,
@@ -8,7 +7,6 @@ import {
   StyleSheet,
   Alert,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
@@ -19,59 +17,20 @@ import Header from '../components/Header';
 import { PaymentMethod, OrderStatus } from '../types';
 import { orderService, paymentService } from '../services/api';
 
-const { width } = Dimensions.get('window');
-
-// Simple gradient replacement using overlays
-const GradientView = ({ colors, children, style }: any) => {
-  return (
-    <View style={[{ backgroundColor: colors[0] }, style]}>
-      {children}
-    </View>
-  );
-};
-
-// Simple icon replacements
-const Icon = ({ name, size = 24, color = '#000' }: any) => {
-  const iconMap: any = {
-    'receipt-outline': '🧾',
-    'card-outline': '💳',
-    'cash-outline': '💵',
-    'shield-checkmark': '🔒',
-    'checkmark': '✓',
-    'sync': '⟳',
-    'arrow-forward': '→',
-  };
-
-  return (
-    <Text style={{ fontSize: size, color }}>
-      {iconMap[name] || '•'}
-    </Text>
-  );
-};
-
 const PaymentScreen = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const cart = useSelector((state: RootState) => state.cart);
   const selectedAddress = useSelector((state: RootState) => state.address.selectedAddress);
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(1));
 
   const animateSelection = () => {
     Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
+      Animated.timing(scaleAnim, { toValue: 0.97, duration: 80, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 80, useNativeDriver: true }),
     ]).start();
   };
 
@@ -81,19 +40,14 @@ const PaymentScreen = () => {
   };
 
   const handlePlaceOrder = async () => {
-    // Validate payment method
     if (!selectedPaymentMethod) {
       Alert.alert('Payment Method Required', 'Please select a payment method to continue');
       return;
     }
-
-    // Validate address
     if (!selectedAddress) {
       Alert.alert('Address Missing', 'Please add a delivery address');
       return;
     }
-
-    // Validate cart is not empty
     if (cart.items.length === 0) {
       Alert.alert('Cart Empty', 'Please add items to your cart');
       return;
@@ -102,10 +56,10 @@ const PaymentScreen = () => {
     setIsProcessing(true);
 
     try {
-      // Handle COD payment
+      // ── COD ──────────────────────────────────────────────────────────────
       if (selectedPaymentMethod === PaymentMethod.COD) {
         const orderId = `ORD-${Date.now()}`;
-        
+
         const codResult = await orderService.createCODOrder({
           orderId,
           items: cart.items.map(item => ({
@@ -130,7 +84,7 @@ const PaymentScreen = () => {
         });
 
         if (!codResult.success || !codResult.data?.order) {
-          throw new Error(codResult.error || 'Failed to save COD order to database');
+          throw new Error(codResult.error || 'Failed to create COD order');
         }
 
         dispatch(
@@ -138,7 +92,7 @@ const PaymentScreen = () => {
             id: codResult.data.order.id,
             items: cart.items,
             shippingAddress: selectedAddress,
-            paymentInfo: { method: selectedPaymentMethod as PaymentMethod },
+            paymentInfo: { method: PaymentMethod.COD },
             totalAmount: cart.totalPrice,
             status: OrderStatus.PENDING,
             createdAt: new Date().toISOString(),
@@ -150,7 +104,7 @@ const PaymentScreen = () => {
         return;
       }
 
-      // Handle ONLINE payment (Dialog Pay)
+      // ── Online Payment (hosted checkout — gateway handles card/wallet) ───
       const paymentPayload = {
         items: cart.items.map(item => ({
           id: item.product.id,
@@ -170,86 +124,56 @@ const PaymentScreen = () => {
           zipCode: selectedAddress.zipCode,
         },
         totalAmount: Number(cart.totalPrice),
+        paymentMethod: PaymentMethod.CARD,
       };
 
-      console.log('📤 Sending payment payload:', JSON.stringify(paymentPayload, null, 2));
+      console.log('📤 Payment payload:', JSON.stringify(paymentPayload, null, 2));
 
-      const paymentResult = await paymentService.createOnlinePayment(paymentPayload);
+      const paymentResult = await paymentService.createOrderAndPayment(paymentPayload);
 
-      console.log('📥 Full payment response:', JSON.stringify(paymentResult, null, 2));
+      console.log('📥 Payment response:', JSON.stringify(paymentResult, null, 2));
 
       if (!paymentResult.success || !paymentResult.data) {
         throw new Error(paymentResult.error || 'Payment request failed');
       }
 
-      // Extract data from response
-      const checkout_url = paymentResult.data.checkout_url;
-      const responseOrder = paymentResult.data.order;
-      const txnRef = paymentResult.data.txnRef;
+      const { checkout_url, order: responseOrder, txnRef } = paymentResult.data;
 
-      console.log('🔗 checkout_url:', checkout_url);
-      console.log('📦 Order ID:', responseOrder?.id);
-      console.log('💳 Transaction Ref:', txnRef);
+      dispatch(setPaymentInfo({ method: PaymentMethod.CARD, transactionId: txnRef }));
 
-      // Update Redux with payment info
-      dispatch(
-        setPaymentInfo({
-          method: PaymentMethod.ONLINE,
-          transactionId: txnRef,
-        })
-      );
-
-      // Create order in Redux
       dispatch(
         createOrder({
           id: responseOrder?.id?.toString() || `ORD-${Date.now()}`,
           items: cart.items,
           shippingAddress: selectedAddress,
-          paymentInfo: {
-            method: PaymentMethod.ONLINE,
-            transactionId: txnRef,
-          },
+          paymentInfo: { method: PaymentMethod.CARD, transactionId: txnRef },
           totalAmount: cart.totalPrice,
           status: OrderStatus.PROCESSING,
           createdAt: new Date().toISOString(),
         })
       );
 
-      // Clear cart
       dispatch(clearCart());
 
-      // Navigate to PaymentWebView with the checkout_url
       if (checkout_url) {
-        console.log('✅ Navigating to PaymentWebView with URL:', checkout_url);
         navigation.navigate('PaymentWebView', {
           checkoutUrl: checkout_url,
           orderId: responseOrder?.id?.toString() || `ORD-${Date.now()}`,
         });
       } else {
-        console.error('❌ No checkout_url in response');
         Alert.alert(
           'Payment Gateway Error',
-          'Unable to initialize payment gateway. Please try again.',
+          'Unable to initialize payment. Please try again.',
           [{ text: 'OK', onPress: () => navigation.goBack() }]
         );
       }
-      
     } catch (error: any) {
       console.error('❌ Payment Error:', error);
-      
-      let errorMessage = 'Unable to process payment. Please try again.';
-      
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        errorMessage = errorData.message || errorData.error || errorMessage;
-        console.error('Error response data:', JSON.stringify(errorData, null, 2));
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-        errorMessage = 'No response from server. Please check your connection.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Unable to process payment. Please try again.';
       Alert.alert('Payment Failed', errorMessage);
     } finally {
       setIsProcessing(false);
@@ -260,77 +184,45 @@ const PaymentScreen = () => {
     method,
     title,
     subtitle,
-    icon,
-    gradient,
+    emoji,
+    accentColor,
   }: {
     method: PaymentMethod;
     title: string;
     subtitle: string;
-    icon: string;
-    gradient: string[];
+    emoji: string;
+    accentColor: string;
   }) => {
     const isSelected = selectedPaymentMethod === method;
 
     return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => handleSelectPayment(method)}
-        style={styles.paymentOptionWrapper}
-      >
+      <TouchableOpacity activeOpacity={0.7} onPress={() => handleSelectPayment(method)}>
         <Animated.View
           style={[
             styles.paymentOption,
-            isSelected && styles.paymentOptionSelected,
+            isSelected && { ...styles.paymentOptionSelected, borderColor: accentColor },
             { transform: [{ scale: scaleAnim }] },
           ]}
         >
-          <GradientView
-            colors={isSelected ? gradient : ['#FFFFFF', '#FFFFFF']}
+          <View style={[styles.iconBox, { backgroundColor: accentColor + '18' }]}>
+            <Text style={styles.emoji}>{emoji}</Text>
+          </View>
+
+          <View style={styles.paymentTextContainer}>
+            <Text style={[styles.paymentTitle, isSelected && { color: accentColor }]}>
+              {title}
+            </Text>
+            <Text style={styles.paymentSubtitle}>{subtitle}</Text>
+          </View>
+
+          <View
             style={[
-              styles.gradientBackground,
-              { backgroundColor: isSelected ? gradient[0] : '#FFFFFF' }
+              styles.radio,
+              isSelected && { borderColor: accentColor, backgroundColor: accentColor },
             ]}
           >
-            <View style={[
-              styles.iconContainer,
-              { backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.2)' : gradient[0] + '15' }
-            ]}>
-              <Icon
-                name={icon}
-                size={32}
-                color={isSelected ? '#FFFFFF' : gradient[0]}
-              />
-            </View>
-
-            <View style={styles.paymentTextContainer}>
-              <Text
-                style={[
-                  styles.paymentTitle,
-                  isSelected && styles.paymentTitleSelected,
-                ]}
-              >
-                {title}
-              </Text>
-              <Text
-                style={[
-                  styles.paymentSubtitle,
-                  isSelected && styles.paymentSubtitleSelected,
-                ]}
-              >
-                {subtitle}
-              </Text>
-            </View>
-
-            <View style={styles.radioContainer}>
-              {isSelected ? (
-                <View style={[styles.radioSelected, { backgroundColor: 'rgba(255, 255, 255, 0.3)' }]}>
-                  <Icon name="checkmark" size={16} color="#FFFFFF" />
-                </View>
-              ) : (
-                <View style={styles.radioUnselected} />
-              )}
-            </View>
-          </GradientView>
+            {isSelected && <Text style={styles.radioCheck}>✓</Text>}
+          </View>
         </Animated.View>
       </TouchableOpacity>
     );
@@ -345,12 +237,9 @@ const PaymentScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Order Summary Card */}
+        {/* Order Summary */}
         <View style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <Icon name="receipt-outline" size={24} color="#6366F1" />
-            <Text style={styles.summaryTitle}>Order Summary</Text>
-          </View>
+          <Text style={styles.summaryTitle}>🧾  Order Summary</Text>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Items ({cart.items.length})</Text>
@@ -370,36 +259,28 @@ const PaymentScreen = () => {
           </View>
         </View>
 
-        {/* Payment Methods Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Icon name="card-outline" size={22} color="#1F2937" />
-            <Text style={styles.sectionTitle}>Select Payment Method</Text>
-          </View>
+        {/* Payment Methods */}
+        <Text style={styles.sectionTitle}>Select Payment Method</Text>
 
-          <PaymentOption
-            method={PaymentMethod.COD}
-            title="Cash on Delivery"
-            subtitle="Pay when you receive"
-            icon="cash-outline"
-            gradient={['#10B981', '#059669']}
-          />
+        <PaymentOption
+          method={PaymentMethod.COD}
+          title="Cash on Delivery"
+          subtitle="Pay when you receive your order"
+          emoji="💵"
+          accentColor="#10B981"
+        />
 
-          <PaymentOption
-            method={PaymentMethod.ONLINE}
-            title="Online Payment"
-            subtitle="Pay securely via card or wallet"
-            icon="card-outline"
-            gradient={['#6366F1', '#4F46E5']}
-          />
-        </View>
+        <PaymentOption
+          method={PaymentMethod.CARD}
+          title="Pay Online"
+          subtitle="Card, JazzCash, EasyPaisa & more"
+          emoji="💳"
+          accentColor="#6366F1"
+        />
 
-        {/* Security Badge */}
+        {/* Security badge */}
         <View style={styles.securityBadge}>
-          <Icon name="shield-checkmark" size={20} color="#10B981" />
-          <Text style={styles.securityText}>
-            Your payment information is secure and encrypted
-          </Text>
+          <Text style={styles.securityText}>🔒  Payments are secure and encrypted</Text>
         </View>
       </ScrollView>
 
@@ -414,33 +295,9 @@ const PaymentScreen = () => {
             (!selectedPaymentMethod || isProcessing) && styles.placeOrderButtonDisabled,
           ]}
         >
-          <GradientView
-            colors={
-              !selectedPaymentMethod || isProcessing
-                ? ['#D1D5DB', '#9CA3AF']
-                : ['#6366F1', '#4F46E5']
-            }
-            style={[
-              styles.buttonGradient,
-              {
-                backgroundColor: !selectedPaymentMethod || isProcessing
-                  ? '#9CA3AF'
-                  : '#6366F1'
-              }
-            ]}
-          >
-            {isProcessing ? (
-              <View style={styles.buttonContent}>
-                <Icon name="sync" size={20} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Processing...</Text>
-              </View>
-            ) : (
-              <View style={styles.buttonContent}>
-                <Text style={styles.buttonText}>Place Order</Text>
-                <Icon name="arrow-forward" size={20} color="#FFFFFF" />
-              </View>
-            )}
-          </GradientView>
+          <Text style={styles.buttonText}>
+            {isProcessing ? '⟳  Processing...' : 'Place Order  →'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -448,17 +305,10 @@ const PaymentScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  scrollView: { flex: 1 },
+  scrollContent: { padding: 20, paddingBottom: 120 },
+
   summaryCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -466,156 +316,65 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
   },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginLeft: 8,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    fontSize: 15,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  summaryValue: {
-    fontSize: 15,
-    color: '#1F2937',
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 12,
-  },
-  totalLabel: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  totalValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#6366F1',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginLeft: 8,
-  },
-  paymentOptionWrapper: {
-    marginBottom: 12,
-  },
+  summaryTitle: { fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 16 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  summaryLabel: { fontSize: 15, color: '#6B7280', fontWeight: '500' },
+  summaryValue: { fontSize: 15, color: '#1F2937', fontWeight: '600' },
+  divider: { height: 1, backgroundColor: '#E5E7EB', marginVertical: 12 },
+  totalLabel: { fontSize: 17, fontWeight: '700', color: '#1F2937' },
+  totalValue: { fontSize: 20, fontWeight: '800', color: '#6366F1' },
+
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1F2937', marginBottom: 12 },
+
   paymentOption: {
-    borderRadius: 16,
-    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 2,
   },
   paymentOptionSelected: {
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  gradientBackground: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 18,
     borderWidth: 2,
-    borderColor: 'transparent',
-    borderRadius: 16,
+    shadowOpacity: 0.1,
+    elevation: 4,
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
+  iconBox: {
+    width: 52,
+    height: 52,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paymentTextContainer: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  paymentTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  paymentTitleSelected: {
-    color: '#FFFFFF',
-  },
-  paymentSubtitle: {
-    fontSize: 13,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  paymentSubtitleSelected: {
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  radioContainer: {
-    marginLeft: 12,
-  },
-  radioSelected: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  radioUnselected: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  emoji: { fontSize: 26 },
+  paymentTextContainer: { flex: 1, marginLeft: 14 },
+  paymentTitle: { fontSize: 15, fontWeight: '700', color: '#1F2937', marginBottom: 3 },
+  paymentSubtitle: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
+  radio: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 2,
     borderColor: '#D1D5DB',
-    backgroundColor: 'transparent',
-  },
-  securityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ECFDF5',
-    padding: 12,
-    borderRadius: 12,
-    marginTop: 8,
+    alignItems: 'center',
   },
-  securityText: {
-    fontSize: 13,
-    color: '#059669',
-    fontWeight: '600',
-    marginLeft: 8,
-  },
+  radioCheck: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+
+  securityBadge: { alignItems: 'center', marginTop: 8, paddingVertical: 8 },
+  securityText: { fontSize: 13, color: '#059669', fontWeight: '600' },
+
   buttonContainer: {
     position: 'absolute',
     bottom: 0,
@@ -623,18 +382,20 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#FFFFFF',
     padding: 20,
-    paddingBottom: 30,
+    paddingBottom: 36,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 10,
   },
   placeOrderButton: {
+    backgroundColor: '#6366F1',
     borderRadius: 16,
-    overflow: 'hidden',
+    paddingVertical: 18,
+    alignItems: 'center',
     shadowColor: '#6366F1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -642,23 +403,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   placeOrderButtonDisabled: {
+    backgroundColor: '#9CA3AF',
     shadowOpacity: 0.1,
   },
-  buttonGradient: {
-    paddingVertical: 18,
-    paddingHorizontal: 24,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginHorizontal: 8,
-  },
+  buttonText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.3 },
 });
 
 export default PaymentScreen;

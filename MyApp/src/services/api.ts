@@ -202,39 +202,31 @@ export const orderService = {
   },
 
   createCODOrder: async (orderData: {
-  orderId: string;
-  items: any[];
-  shippingAddress: any;
-  totalAmount: number;
-}): Promise<ApiResponse<any>> => {
-  try {
-    // FIX: Send exactly what backend expects
-    const payload = {
-      orderId: orderData.orderId,  // Send the orderId
-      items: orderData.items,
-      shippingAddress: orderData.shippingAddress,
-      totalAmount: orderData.totalAmount,
-    };
-    
-    const response = await apiClient.post('/payments/cod', payload);
-    console.log('[createCODOrder] Success:', response.data);
-    return { success: true, data: response.data };
-  } catch (error: any) {
-    console.error('[createCODOrder] Error:', error.message);
-    if (error.response) {
-      console.error('[createCODOrder] Error response:', error.response.data);
+    orderId: string;
+    items: any[];
+    shippingAddress: any;
+    totalAmount: number;
+  }): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.post('/orders/cod', orderData);
+      console.log('[createCODOrder] Success:', response.data);
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('[createCODOrder] Error:', error.message);
+      if (error.response) {
+        console.error('[createCODOrder] Error response:', error.response.data);
+      }
+      return { success: false, error: error.message };
     }
-    return { success: false, error: error.message };
-  }
-},
+  },
 };
 
-// Payment Services - UPDATED with correct endpoints
+// Payment Services - CORRECTED ENDPOINT
 export const paymentService = {
-  // Legacy method - kept for backward compatibility
   createOrderAndPayment: async (paymentData: any): Promise<ApiResponse<any>> => {
     try {
-      console.log('[PaymentService] Creating order and payment (legacy)...');
+      console.log('[PaymentService] Creating order and payment...');
+      console.log('[PaymentService] Endpoint: /payments/order');
       console.log('[PaymentService] Payment Data:', JSON.stringify(paymentData, null, 2));
       
       const response = await apiClient.post('/payments/order', paymentData);
@@ -277,82 +269,6 @@ export const paymentService = {
           error: error.message 
         };
       }
-    }
-  },
-
-  // NEW: Online payment method using apiClient
-  createOnlinePayment: async (paymentData: any): Promise<ApiResponse<any>> => {
-    try {
-      console.log('[PaymentService] Creating online payment...');
-      console.log('[PaymentService] Endpoint: /payments/online');
-      console.log('[PaymentService] Payment Data:', JSON.stringify(paymentData, null, 2));
-      
-      const response = await apiClient.post('/payments/online', paymentData);
-      
-      console.log('[PaymentService] Response status:', response.status);
-      console.log('[PaymentService] Response data:', JSON.stringify(response.data, null, 2));
-      
-      if (response.data && response.data.success) {
-        console.log('[PaymentService] Online payment successful - order:', response.data.order?.id);
-        console.log('[PaymentService] Checkout URL:', response.data.checkout_url);
-        console.log('[PaymentService] Transaction Ref:', response.data.txnRef);
-      }
-      
-      return {
-        success: true,
-        data: response.data,
-      };
-    } catch (error: any) {
-      console.error('[PaymentService] Online payment error:');
-      
-      if (error.response) {
-        console.error('[PaymentService] Response status:', error.response.status);
-        console.error('[PaymentService] Response data:', JSON.stringify(error.response.data, null, 2));
-        
-        return {
-          success: false,
-          error: error.response.data?.message || error.response.data?.error || 'Online payment failed',
-          data: error.response.data
-        };
-      } else if (error.request) {
-        console.error('[PaymentService] No response received:', error.request);
-        return {
-          success: false,
-          error: 'Network error - no response from server. Please check your connection.',
-          data: null
-        };
-      } else {
-        console.error('[PaymentService] Request setup error:', error.message);
-        return {
-          success: false,
-          error: error.message || 'Failed to create online payment',
-          data: null
-        };
-      }
-    }
-  },
-
-  // Helper method to verify payment status
-  verifyPayment: async (orderId: string): Promise<ApiResponse<any>> => {
-    try {
-      console.log('[PaymentService] Verifying payment for order:', orderId);
-      
-      const response = await apiClient.get(`/payments/verify/${orderId}`);
-      
-      console.log('[PaymentService] Verification response:', response.data);
-      
-      return {
-        success: true,
-        data: response.data,
-      };
-    } catch (error: any) {
-      console.error('[PaymentService] Payment verification error:', error.message);
-      
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message || 'Payment verification failed',
-        data: null,
-      };
     }
   },
 };
