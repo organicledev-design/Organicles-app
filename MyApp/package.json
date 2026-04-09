@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "postinstall": "node scripts/apply-native-fixes.js"
+    "postinstall": "mkdir -p node_modules/react-native/sdks/hermesc/linux64-bin && cp node_modules/react-native/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc node_modules/react-native/sdks/hermesc/linux64-bin/hermesc && chmod +x node_modules/react-native/sdks/hermesc/linux64-bin/hermesc"
+
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -30,7 +31,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
-    "@babel/runtime": "^7.25.0",
+    "@babel/runtime": "^7.29.2",
     "@react-native-community/cli": "20.0.0",
     "@react-native-community/cli-platform-android": "20.0.0",
     "@react-native-community/cli-platform-ios": "20.0.0",
