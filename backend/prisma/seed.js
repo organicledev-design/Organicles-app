@@ -237,7 +237,7 @@ const uploadUrl = (filename) => cloudinaryUrls[filename] || filename;async funct
       {
         name: "Nashta",
         description: "Nutritious traditional breakfast blend.",
-        price: 3850,
+        price:2950,
         images: JSON.stringify([uploadUrl("1770969560194-nashta.jpg")]),
         category: "Breakfast",
         featured: true,
