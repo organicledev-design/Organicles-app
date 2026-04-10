@@ -11,6 +11,7 @@ const DIALOG_USERNAME = process.env.DIALOG_USERNAME;
 const DIALOG_PASSWORD = process.env.DIALOG_PASSWORD;
 const DIALOG_PRIVATE_KEY = process.env.DIALOG_PRIVATE_KEY;
 const DIALOG_PUBLIC_KEY = process.env.DIALOG_PUBLIC_KEY;
+const DIALOG_PAYMENT_PROVIDER_ID = process.env.DIALOG_PAYMENT_PROVIDER_ID;
 
 function dialogAuthHeader() {
   const encoded = Buffer.from(`${DIALOG_USERNAME}:${DIALOG_PASSWORD}`).toString('base64');
@@ -48,6 +49,7 @@ async function createDialogPaySession({
     merchant_id: DIALOG_MERCHANT_ID,
     database_name: DIALOG_DATABASE_NAME,
     payment_service_id: DIALOG_PAYMENT_SERVICE_ID,
+    ...(DIALOG_PAYMENT_PROVIDER_ID ? { payment_provider_id: DIALOG_PAYMENT_PROVIDER_ID } : {}),
     order_id: orderId,
     amount,
     currency,

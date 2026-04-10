@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
+  SafeAreaView,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -27,6 +28,8 @@ import apiClient, {
   partnerService,
 } from '../services/api';
 import { Product, Partner } from '../types';
+import { RefreshControl } from 'react-native';
+
 
 const { width } = Dimensions.get('window');
 const API_BASE = Config.API_BASE_URL
@@ -65,6 +68,7 @@ const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const cartItems = useSelector((state: RootState) => state.cart.totalItems);
   const profile = useSelector((state: RootState) => state.auth.profile);
+  const [refreshing, setRefreshing] = useState(false);
 
   // ── Hero ──────────────────────────────────────────────────────
   const heroScrollRef = useRef<ScrollView>(null);
@@ -101,6 +105,15 @@ const HomeScreen = () => {
     if (Array.isArray(value?.data)) return value.data;
     return [];
   };
+  const onRefresh = useCallback(async () => {
+  setRefreshing(true);
+  await Promise.all([
+    loadHeroBanners(),
+    loadProducts(),
+    loadPartners(),
+  ]);
+  setRefreshing(false);
+}, []);
 
   // ── Derived: grouped products ─────────────────────────────────
   const bestSellers = products
@@ -324,6 +337,7 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
         onScroll={handleMainScroll}
         scrollEventThrottle={16}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* ── Hero Carousel ── */}
         <View style={styles.heroSection}>
@@ -527,6 +541,8 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.sm,
     alignItems: 'center',
+    justifyContent: 'space-between',   // add this
+  minHeight: 240,    
   },
   bundleImage: { width: '100%', height: 140, marginBottom: SPACING.sm },
   bundleTitle: {
@@ -561,17 +577,22 @@ const styles = StyleSheet.create({
 
   footer: { height: SPACING.xl },
 
-  drawerRoot: { flex: 1, flexDirection: 'row' },
+  drawerRoot: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'stretch' },
   drawerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
   drawerPanel: {
     position: 'absolute',
     left: 0, top: 0, bottom: 0,
-    width: 280,
+    width: '82%',
+    maxWidth: 300,
     backgroundColor: '#fff',
-    paddingTop: 56,
-    paddingHorizontal: 16,
   },
-  drawerHeader: { marginBottom: 20 },
+  drawerPanelContent: {
+    flex: 1,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  drawerHeader: { marginBottom: 12, alignItems: 'center' },
   drawerAvatar: {
     width: 56, height: 56, borderRadius: 28,
     backgroundColor: COLORS.primary,
@@ -579,10 +600,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   drawerAvatarText: { color: '#fff', fontWeight: '700', fontSize: 22 },
-  drawerName: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
-  drawerPhone: { marginTop: 4, color: COLORS.textSecondary },
-  drawerItem: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  drawerItemText: { fontSize: 16, color: COLORS.textPrimary, fontWeight: '600' },
+  drawerName: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
+  drawerPhone: { marginTop: 4, color: COLORS.textSecondary, textAlign: 'center' },
+  drawerItem: { paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
+  drawerItemText: { fontSize: 16, color: COLORS.textPrimary, fontWeight: '600', textAlign: 'center' },
 });
 
 export default HomeScreen;
+
+
+
+
+
+
+
+
+
+
+
+
+

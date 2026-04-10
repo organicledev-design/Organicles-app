@@ -46,7 +46,7 @@ const uploadUrl = (filename) => cloudinaryUrls[filename] || filename;async funct
       {
         name: "Black Pepper",
         description: "Pure black pepper for daily cooking.",
-        price: 1500,
+        price: 10,
         images: JSON.stringify([uploadUrl("1770968814733-black-pepper.jpg")]),
         category: "Spices",
         featured: true,

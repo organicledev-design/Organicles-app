@@ -157,12 +157,16 @@ export const userService = {
     }
   },
 
-  getProfileByPhone: async (phone: string): Promise<ApiResponse<any>> => {
+    getProfileByPhone: async (phone: string): Promise<ApiResponse<any>> => {
     try {
       const encodedPhone = encodeURIComponent(phone);
       const response = await apiClient.get(`/users/profile/${encodedPhone}`);
       return { success: true, data: response.data };
     } catch (error: any) {
+      if (error.response?.status === 404) {
+        // User not found is an expected state for new users
+        return { success: false, error: 'User not found' };
+      }
       console.error(`[userService.getProfileByPhone] Error for phone ${phone}:`, error.message);
       return { success: false, error: error.message };
     }

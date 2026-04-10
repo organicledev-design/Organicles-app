@@ -16,7 +16,7 @@ apply from: project(":react-native-config").projectDir.getPath() + "/dotenv.grad
  */
 react {
 
-    hermesCommand = "/home/raja_abid/ProjectFolder/MyApp/node_modules/react-native/sdks/hermesc/%OS-BIN%/hermesc"
+    hermesCommand = "/home/raja_abid/ProjectFolder/MyApp/node_modules/hermes-compiler/hermesc/%OS-BIN%/hermesc"
 
     /* Folders */
     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
