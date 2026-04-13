@@ -275,6 +275,37 @@ export const paymentService = {
       }
     }
   },
+  
+};
+export const adminService = {
+  login: async (username: string, password: string) => {
+    try {
+      const response = await apiClient.post('/admin/login', { username, password });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.message || error.message };
+    }
+  },
+  getOrders: async (token: string) => {
+    try {
+      const response = await apiClient.get('/admin/orders', {
+        headers: { 'x-admin-token': token },
+      });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.message || error.message };
+    }
+  },
+  updateOrderStatus: async (orderId: string, status: string, token: string) => {
+    try {
+      const response = await apiClient.put(`/admin/orders/${orderId}/status`, { status }, {
+        headers: { 'x-admin-token': token },
+      });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.message || error.message };
+    }
+  },
 };
 
 export default apiClient;

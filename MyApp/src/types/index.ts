@@ -123,5 +123,7 @@ export type RootStackParamList = {
     checkoutUrl: string;
     orderId: string;
   };
+  AdminLogin: undefined;
+AdminDashboard: undefined;
 
 };
