@@ -59,9 +59,14 @@ const authLimiter = rateLimit({
 // CORS - fixed to not allow all origins
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin || "*");
+  if (origin && allowedOrigins.includes(origin)) {
+    // Browser request from allowed origin
+    res.header("Access-Control-Allow-Origin", origin);
+  } else if (!origin) {
+    // Allow requests with no origin (mobile apps, Postman, curl)
+    res.header("Access-Control-Allow-Origin", "*");
   }
+  // Blocked: browser requests from unknown origins get no CORS header
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
