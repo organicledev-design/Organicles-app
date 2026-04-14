@@ -124,6 +124,6 @@ export type RootStackParamList = {
     orderId: string;
   };
   AdminLogin: undefined;
-AdminDashboard: undefined;
+AdminDashboardScreen: undefined;
 
 };

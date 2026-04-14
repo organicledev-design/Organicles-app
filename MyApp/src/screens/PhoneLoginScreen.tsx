@@ -263,6 +263,8 @@ const formatDate = (date: Date) => {
         </Text>
       </View>
       {showDobPicker && (
+        
+        
   <DateTimePicker
     value={dobDate || new Date(2000, 0, 1)}
     mode="date"
@@ -282,6 +284,7 @@ const formatDate = (date: Date) => {
 
   />
 )}
+
 
     </View>
   );

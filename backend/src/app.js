@@ -1,5 +1,6 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
 const path = require("path");
 const heroBannerRoutes = require('./routes/heroBanner.routes');
 
@@ -10,13 +11,27 @@ const uploadsDir = process.env.UPLOADS_DIR
 const app = express();
 app.set("trust proxy", 1);
 
+// Hide Express from attackers
+app.disable("x-powered-by");
+
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    }
+  }
+}));
+
 const allowedOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // Prevent large payload attacks
 
 const limiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
@@ -31,9 +46,22 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS
+// Stricter rate limit for auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // only 10 attempts per 15 minutes
+  message: {
+    success: false,
+    message: "Too many attempts, please try again later.",
+  }
+});
+
+// CORS - fixed to not allow all origins
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin;
+  if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin || "*");
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
@@ -41,12 +69,13 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 // Routes
 app.use("/api/orders", require("./routes/order.routes"));
 app.use("/api/payments", require("./routes/payment.routes"));
 app.use("/api/health", require("./routes/health.routes"));
 app.use("/api/products", require("./routes/product.routes"));
-app.use('/api/admin', require('./routes/admin.routes'));
+app.use('/api/admin', authLimiter, require('./routes/admin.routes')); // Extra rate limit on admin
 app.use("/api/partners", require("./routes/partner.routes"));
 app.use(
   '/uploads',
@@ -61,13 +90,9 @@ app.use(
 );
 app.use("/api/uploads", require("./routes/upload.routes"));
 app.use('/api/hero-banners', heroBannerRoutes);
-app.use("/api/users", require("./routes/user.routes"));
-
-
-
+app.use("/api/users", authLimiter, require("./routes/user.routes")); // Extra rate limit on users
 
 // Global error handler
 app.use(require("./middlewares/error.middleware"));
-
 
 module.exports = app;

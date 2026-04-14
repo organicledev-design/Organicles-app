@@ -45,6 +45,11 @@ const WelcomeScreen = ({ navigation }: Props) => {
       </View>
 
       <View style={styles.footer}>
+        <TouchableOpacity
+  style={styles.adminBtn}
+  onPress={() => navigation.navigate('AdminLogin')}>
+  <Text style={styles.adminBtnText}>Admin</Text>
+</TouchableOpacity>
         <Text style={styles.footerText}>
           By continuing, you agree to our Terms of Service and Privacy Policy
         </Text>
@@ -132,6 +137,15 @@ const styles = StyleSheet.create({
     color: '#999999',
     textAlign: 'center',
   },
+  adminBtn: {
+  alignSelf: 'center',
+  marginBottom: 12,
+},
+adminBtnText: {
+  fontSize: 12,
+  color: '#CCCCCC',
+  fontWeight: '500',
+},
 });
 
 export default WelcomeScreen;

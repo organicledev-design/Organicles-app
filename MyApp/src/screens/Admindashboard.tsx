@@ -50,7 +50,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-const Admindashboardscreen = () => {
+const AdminDashboard = () => {
   const navigation = useNavigation<any>();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -406,4 +406,4 @@ const styles = StyleSheet.create({
   pendingBtnText: { fontSize: 14, fontWeight: '700', color: '#92400E' },
 });
 
-export default Admindashboardscreen;
+export default AdminDashboard;
