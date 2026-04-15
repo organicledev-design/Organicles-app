@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,8 @@ import { setPaymentInfo, createOrder } from '../store/slices/orderSlice';
 import { clearCart } from '../store/slices/cartSlice';
 import Header from '../components/Header';
 import { PaymentMethod, OrderStatus } from '../types';
-import { orderService, paymentService } from '../services/api';
+import { orderService, paymentService, settingsService } from '../services/api';
+
 
 const PaymentScreen = () => {
   const navigation = useNavigation<any>();
@@ -25,7 +26,25 @@ const PaymentScreen = () => {
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  // const [scaleAnim] = useState(new Animated.Value(1));
+  // const [deliveryFee, setDeliveryFee] = useState(200);
+
   const [scaleAnim] = useState(new Animated.Value(1));
+
+// ✅ Add these
+const [deliveryFee, setDeliveryFee] = useState(200);
+
+useEffect(() => {
+  settingsService.getDeliveryFee().then(fee => setDeliveryFee(fee));
+}, []);
+
+const COD_TAX_RATE = 0.04;
+const subtotal = cart.totalPrice;
+const codTax = selectedPaymentMethod === PaymentMethod.COD
+  ? Math.round(subtotal * COD_TAX_RATE)
+  : 0;
+const finalTotal = subtotal + deliveryFee + codTax;
+
 
   const animateSelection = () => {
     Animated.sequence([
@@ -80,7 +99,7 @@ const PaymentScreen = () => {
             zipCode: selectedAddress.zipCode,
             country: 'Pakistan',
           },
-          totalAmount: Number(cart.totalPrice),
+          totalAmount: finalTotal,
         });
 
         if (!codResult.success || !codResult.data?.order) {
@@ -93,7 +112,7 @@ const PaymentScreen = () => {
             items: cart.items,
             shippingAddress: selectedAddress,
             paymentInfo: { method: PaymentMethod.COD },
-            totalAmount: cart.totalPrice,
+            totalAmount: finalTotal,
             status: OrderStatus.PENDING,
             createdAt: new Date().toISOString(),
           })
@@ -123,7 +142,7 @@ const PaymentScreen = () => {
           state: selectedAddress.state,
           zipCode: selectedAddress.zipCode,
         },
-        totalAmount: Number(cart.totalPrice),
+        totalAmount: finalTotal,
         paymentMethod: PaymentMethod.CARD,
       };
 
@@ -147,7 +166,7 @@ const PaymentScreen = () => {
           items: cart.items,
           shippingAddress: selectedAddress,
           paymentInfo: { method: PaymentMethod.CARD, transactionId: txnRef },
-          totalAmount: cart.totalPrice,
+          totalAmount: finalTotal,
           status: OrderStatus.PROCESSING,
           createdAt: new Date().toISOString(),
         })
@@ -238,28 +257,37 @@ const PaymentScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Order Summary */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>🧾  Order Summary</Text>
+<View style={styles.summaryCard}>
+  <Text style={styles.summaryTitle}>🧾  Order Summary</Text>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Items ({cart.items.length})</Text>
-            <Text style={styles.summaryValue}>Rs. {cart.totalPrice.toFixed(2)}</Text>
-          </View>
+  <View style={styles.summaryRow}>
+    <Text style={styles.summaryLabel}>Items ({cart.items.length})</Text>
+    <Text style={styles.summaryValue}>Rs. {subtotal.toFixed(2)}</Text>
+  </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee</Text>
-            <Text style={styles.summaryValue}>Free</Text>
-          </View>
+  <View style={styles.summaryRow}>
+    <Text style={styles.summaryLabel}>Delivery Fee</Text>
+    <Text style={styles.summaryValue}>Rs. {deliveryFee}</Text>
+  </View>
 
-          <View style={styles.divider} />
+  {selectedPaymentMethod === PaymentMethod.COD && (
+    <View style={styles.summaryRow}>
+      <Text style={styles.summaryLabel}>COD Tax (4%)</Text>
+      <Text style={styles.summaryValue}>Rs. {codTax.toFixed(2)}</Text>
+    </View>
+  )}
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>Rs. {cart.totalPrice.toFixed(2)}</Text>
-          </View>
-        </View>
+  <View style={styles.divider} />
 
-        {/* Payment Methods */}
+  <View style={styles.summaryRow}>
+    <Text style={styles.totalLabel}>Total Amount</Text>
+    <Text style={styles.totalValue}>
+      Rs. {selectedPaymentMethod ? finalTotal.toFixed(2) : (subtotal + deliveryFee).toFixed(2)}
+    </Text>
+  </View>
+</View>
+
+{/* Payment Methods */}
         <Text style={styles.sectionTitle}>Select Payment Method</Text>
 
         <PaymentOption

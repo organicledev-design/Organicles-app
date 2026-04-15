@@ -17,8 +17,6 @@ import PaymentScreen from '../screens/PaymentScreen';
 import OrderSuccessScreen from '../screens/OrderSuccessScreen';
 import BundleDetail from '../screens/BundleDetailScreen';
 import PaymentWebViewScreen from '../screens/PaymentWebViewScreen';
-import AdminLoginScreen from '../screens/Adminloginscreen';
-import AdminDashboard from '../screens/Admindashboard';
 
 
 
@@ -45,9 +43,6 @@ const AppNavigator = () => {
         <Stack.Screen name="Payment" component={PaymentScreen} />
         <Stack.Screen name="BundleDetail" component={BundleDetail} />
         <Stack.Screen name="PaymentWebView" component={PaymentWebViewScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
-<Stack.Screen name="AdminDashboard" component={AdminDashboard} />
-
         <Stack.Screen 
           name="OrderSuccess" 
           component={OrderSuccessScreen}

@@ -45,11 +45,7 @@ const WelcomeScreen = ({ navigation }: Props) => {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-  style={styles.adminBtn}
-  onPress={() => navigation.navigate('AdminLogin')}>
-  <Text style={styles.adminBtnText}>Admin</Text>
-</TouchableOpacity>
+        
         <Text style={styles.footerText}>
           By continuing, you agree to our Terms of Service and Privacy Policy
         </Text>
