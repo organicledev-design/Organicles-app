@@ -1,17 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
-const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
-const fs = require("fs");
-fs.mkdirSync("/var/data", { recursive: true });
+require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
 
-const rawPath = process.env.SQLITE_DB_PATH || path.resolve(__dirname, "dev.db");
-
-const adapter = new PrismaBetterSqlite3({
-  url: `file:${rawPath}`,
-});
-
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 const cloudinaryUrls = {
   "1770968814733-black-pepper.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770968814733-black-pepper_b5zfmf.jpg",
   "1770968814757-brown-sugar.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770968814757-brown-sugar_om5cix.jpg",
