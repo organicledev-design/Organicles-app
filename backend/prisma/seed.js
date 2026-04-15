@@ -357,7 +357,14 @@ await prisma.heroBanner.createMany({
       sortOrder: 4,
     },
   ],
+  
 });
+await prisma.setting.upsert({
+  where: { key: 'delivery_fee' },
+  update: {},
+  create: { key: 'delivery_fee', value: '200' },
+});
+
 
   console.log("✅ Seed completed");
 }
