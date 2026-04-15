@@ -103,6 +103,9 @@ export interface UserProfile {
   phone: string;
   dob: string;
   email?: string;
+  avatar?: string;
+  city?: string;
+  address?: string;
 }
 
 // Navigation Types

@@ -95,7 +95,8 @@ app.use(
 );
 app.use("/api/uploads", require("./routes/upload.routes"));
 app.use('/api/hero-banners', heroBannerRoutes);
-app.use("/api/users", authLimiter, require("./routes/user.routes")); // Extra rate limit on users
+app.use("/api/users", authLimiter, require("./routes/user.routes"));
+app.use('/api/auth', require('./routes/auth.routes')); 
 
 // Global error handler
 app.use(require("./middlewares/error.middleware"));

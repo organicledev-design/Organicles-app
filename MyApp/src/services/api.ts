@@ -157,7 +157,7 @@ export const userService = {
     }
   },
 
-    getProfileByPhone: async (phone: string): Promise<ApiResponse<any>> => {
+  getProfileByPhone: async (phone: string): Promise<ApiResponse<any>> => {
     try {
       const encodedPhone = encodeURIComponent(phone);
       const response = await apiClient.get(`/users/profile/${encodedPhone}`);
@@ -168,6 +168,16 @@ export const userService = {
         return { success: false, error: 'User not found' };
       }
       console.error(`[userService.getProfileByPhone] Error for phone ${phone}:`, error.message);
+      return { success: false, error: error.message };
+    }
+  },
+
+  googleAuth: async (idToken: string): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.post('/auth/google', { idToken });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      console.error('[userService.googleAuth] Error:', error.message);
       return { success: false, error: error.message };
     }
   },

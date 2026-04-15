@@ -7,6 +7,7 @@ export interface UserProfile {
   email?: string;
   city?: string;
   address?: string;
+  avatar?: string;
 }
 
 interface AuthState {

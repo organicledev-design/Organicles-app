@@ -4,8 +4,6 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-   
-
 }
 
 model Order {
@@ -34,7 +32,6 @@ model Payment {
   order Order @relation(fields: [orderId], references: [id])
 }
 
-
 model Review {
   id          String   @id @default(cuid())
   userName    String
@@ -57,6 +54,7 @@ model Partner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model HeroBanner {
   id        String   @id @default(cuid())
   imageUrl  String
@@ -69,13 +67,17 @@ model HeroBanner {
 
 model User {
   id        String   @id @default(cuid())
-  phone     String   @unique
+  phone     String?  @unique       // optional now - google users won't have phone
+  googleId  String?  @unique       // new - for google auth
   fullName  String
-  dob       String
-  email     String?
+  dob       String?                // optional now - google users may not have dob
+  email     String?  @unique       // unique now
+  avatar    String?                // google profile picture
+  authType  String   @default("phone") // "phone" or "google"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model Product {
   id                 String   @id @default(cuid())
   name               String
@@ -87,10 +89,9 @@ model Product {
   category           String
   featured           Boolean  @default(false)
   bestSeller         Boolean  @default(false)
-  bestSellerOrder    Int?     // add this
+  bestSellerOrder    Int?
   stock              Int      @default(0)
   tags               Json?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
-
