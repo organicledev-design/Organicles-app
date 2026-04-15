@@ -113,8 +113,7 @@
       outline: none;
       transition: border-color 0.2s;
       -webkit-appearance: none;
-      appearance: none;  /* ✅ add this */
-
+      appearance: none;
     }
 
     .field input:focus { border-color: var(--green); }
@@ -273,7 +272,6 @@
     .page { display: none; }
     .page.active { display: block; }
 
-    /* Page header */
     .page-header {
       margin-bottom: 32px;
       display: flex;
@@ -300,7 +298,6 @@
       letter-spacing: 1px;
     }
 
-    /* Stats row */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -337,7 +334,6 @@
     .stat-value.red { color: var(--red); }
     .stat-value.blue { color: var(--blue); }
 
-    /* Filters */
     .filters {
       display: flex;
       gap: 8px;
@@ -361,7 +357,6 @@
     .filter-btn:hover { color: var(--text); border-color: var(--text-dim); }
     .filter-btn.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
 
-    /* Search */
     .search-bar {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -386,7 +381,6 @@
       flex-wrap: wrap;
     }
 
-    /* Orders table */
     .table-wrap {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -427,7 +421,6 @@
     .order-id { font-family: var(--font-mono); color: var(--text); font-size: 12px; }
     .amount { color: var(--green); font-weight: 500; }
 
-    /* Status badges */
     .badge {
       display: inline-block;
       padding: 3px 10px;
@@ -459,7 +452,6 @@
 
     .status-select:focus { border-color: var(--green); }
 
-    /* Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -512,7 +504,6 @@
     }
 
     .modal-close:hover { color: var(--red); }
-
     .modal-body { padding: 28px; }
 
     .detail-row {
@@ -600,58 +591,28 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .animate-in { animation: fadeIn 0.3s ease forwards; }
 
-    /* ── Tablet (≤1024px) ── */
     @media (max-width: 1024px) {
       .stats-row { grid-template-columns: repeat(2, 1fr); }
       .main { padding: 32px 24px; }
       .page-title { font-size: 28px; }
     }
 
-    /* ── Mobile (≤768px) ── */
     @media (max-width: 768px) {
       .mobile-topbar { display: flex; }
-
-      .sidebar {
-        transform: translateX(-100%);
-        padding-top: 16px;
-      }
-
+      .sidebar { transform: translateX(-100%); padding-top: 16px; }
       .sidebar.open { transform: translateX(0); }
-
-      .main {
-        margin-left: 0;
-        padding: 72px 16px 24px;
-      }
-
-      .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-      }
-
+      .main { margin-left: 0; padding: 72px 16px 24px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .stat-value { font-size: 24px; }
-
-      .toolbar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .toolbar > div {
-        display: flex;
-        gap: 8px;
-        width: 100%;
-      }
-
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar > div { display: flex; gap: 8px; width: 100%; }
       .search-bar { width: 100%; flex: 1; }
-
       .page-title { font-size: 22px; }
-
       .modal-body { padding: 16px; }
       .modal-header { padding: 16px 20px; }
-
       .toast { bottom: 16px; right: 16px; }
     }
 
-    /* ── Small mobile (≤400px) ── */
     @media (max-width: 400px) {
       .stat-card { padding: 14px; }
       .stat-value { font-size: 20px; }
@@ -690,10 +651,8 @@
 
   <!-- Sidebar overlay -->
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-  <div class="nav-item" id="nav-settings" onclick="showPage('settings')">
-  <span class="nav-icon">⚙️</span> Settings
-</div>
 
+  <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       Organicles
@@ -702,20 +661,18 @@
     <div class="nav-item active" onclick="showPage('orders')">
       <span class="nav-icon">📦</span> Orders
     </div>
-    <!-- ✅ Add here, inside sidebar -->
-  <div class="nav-item" onclick="showPage('settings')">
-    <span class="nav-icon">⚙️</span> Settings
-  </div>
-  <div class="sidebar-footer">
-    <button class="btn-logout" onclick="handleLogout()">← Logout</button>
-  </div>
-</nav>
+    <div class="nav-item" onclick="showPage('settings')">
+      <span class="nav-icon">⚙️</span> Settings
+    </div>
     <div class="sidebar-footer">
       <button class="btn-logout" onclick="handleLogout()">← Logout</button>
     </div>
-  </nav>    
+  </nav>
 
+  <!-- Main -->
   <main class="main">
+
+    <!-- Orders Page -->
     <div class="page active" id="page-orders">
       <div class="page-header">
         <div>
@@ -724,7 +681,7 @@
         <div class="page-meta" id="last-updated"></div>
       </div>
 
-      <div class="stats-row" id="stats-row">
+      <div class="stats-row">
         <div class="stat-card">
           <div class="stat-label">Total Orders</div>
           <div class="stat-value" id="stat-total">—</div>
@@ -778,9 +735,8 @@
         </div>
       </div>
     </div>
-  </main>
-</div>
-<!-- Settings Page -->
+
+    <!-- Settings Page -->
     <div class="page" id="page-settings">
       <div class="page-header">
         <div>
@@ -795,7 +751,7 @@
             <button class="btn-refresh" onclick="saveDeliveryFee()">Save</button>
           </div>
           <div style="margin-top:8px;font-size:11px;color:var(--text-muted);">
-            This fee applies to all online orders. COD orders also include 4% tax.
+            This fee applies to all orders. COD orders also include 4% tax.
           </div>
         </div>
       </div>
@@ -1011,7 +967,7 @@
       selectEl.value = originalValue;
     }
   }
-  
+
   // ── Modal ─────────────────────────────────────────────────────────────────
   function openModal(order) {
     let items = [];
@@ -1078,14 +1034,13 @@
 
   // ── Navigation ────────────────────────────────────────────────────────────
   function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`page-${name}`).classList.add('active');
-  event.currentTarget.classList.add('active');
-  closeSidebar();
-  // ✅ Add this
-  if (name === 'settings') loadDeliveryFee();
-}
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`page-${name}`).classList.add('active');
+    event.currentTarget.classList.add('active');
+    closeSidebar();
+    if (name === 'settings') loadDeliveryFee();
+  }
 
   // ── Toast ─────────────────────────────────────────────────────────────────
   function showToast(msg, isError = false) {
@@ -1100,42 +1055,42 @@
     if (e.key === 'Escape') closeModalDirect();
   });
 
-
+  // ── Settings ──────────────────────────────────────────────────────────────
   async function loadDeliveryFee() {
-  try {
-    const res = await fetch('/api/settings/delivery-fee');
-    const data = await res.json();
-    document.getElementById('delivery-fee-input').value = data.value;
-  } catch (e) {
-    showToast('Failed to load delivery fee', true);
-  }
-}
-
-async function saveDeliveryFee() {
-  const value = document.getElementById('delivery-fee-input').value;
-  if (!value || isNaN(Number(value))) {
-    showToast('Please enter a valid number', true);
-    return;
-  }
-  try {
-    const res = await fetch('/api/settings/delivery-fee', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-token': token,
-      },
-      body: JSON.stringify({ value }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      showToast('Delivery fee updated ✓');
-    } else {
-      showToast(data.message || 'Update failed', true);
+    try {
+      const res = await fetch('/api/settings/delivery-fee');
+      const data = await res.json();
+      document.getElementById('delivery-fee-input').value = data.value;
+    } catch (e) {
+      showToast('Failed to load delivery fee', true);
     }
-  } catch (e) {
-    showToast('Network error', true);
   }
-}
+
+  async function saveDeliveryFee() {
+    const value = document.getElementById('delivery-fee-input').value;
+    if (!value || isNaN(Number(value))) {
+      showToast('Please enter a valid number', true);
+      return;
+    }
+    try {
+      const res = await fetch('/api/settings/delivery-fee', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token,
+        },
+        body: JSON.stringify({ value }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Delivery fee updated ✓');
+      } else {
+        showToast(data.message || 'Update failed', true);
+      }
+    } catch (e) {
+      showToast('Network error', true);
+    }
+  }
 </script>
 </body>
 </html>
