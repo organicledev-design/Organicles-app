@@ -46,6 +46,7 @@
       justify-content: center;
       background: var(--bg);
       position: relative;
+      padding: 16px;
     }
 
     #login-screen::before {
@@ -57,7 +58,8 @@
     }
 
     .login-box {
-      width: 380px;
+      width: 100%;
+      max-width: 380px;
       padding: 48px 40px;
       border: 1px solid var(--border);
       background: var(--surface);
@@ -110,6 +112,9 @@
       padding: 12px 14px;
       outline: none;
       transition: border-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;  /* ✅ add this */
+
     }
 
     .field input:focus { border-color: var(--green); }
@@ -142,6 +147,49 @@
     /* ── Dashboard ── */
     #dashboard { display: none; min-height: 100vh; }
 
+    /* Mobile top bar */
+    .mobile-topbar {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 150;
+    }
+
+    .mobile-topbar-logo {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .btn-hamburger {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 18px;
+      padding: 6px 10px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    /* Sidebar overlay */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000000bb;
+      z-index: 99;
+    }
+
+    .sidebar-overlay.open { display: block; }
+
     /* Sidebar */
     .sidebar {
       position: fixed;
@@ -153,6 +201,7 @@
       flex-direction: column;
       padding: 32px 0;
       z-index: 100;
+      transition: transform 0.25s ease;
     }
 
     .sidebar-logo {
@@ -179,7 +228,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 24px;
+      padding: 14px 24px;
       color: var(--text-muted);
       font-size: 13px;
       cursor: pointer;
@@ -230,6 +279,8 @@
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .page-title {
@@ -241,10 +292,7 @@
       line-height: 1;
     }
 
-    .page-title em {
-      font-style: italic;
-      color: var(--green);
-    }
+    .page-title em { font-style: italic; color: var(--green); }
 
     .page-meta {
       font-size: 11px;
@@ -335,23 +383,24 @@
       justify-content: space-between;
       margin-bottom: 16px;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     /* Orders table */
     .table-wrap {
       background: var(--surface);
       border: 1px solid var(--border);
-      overflow: hidden;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      min-width: 700px;
     }
 
-    thead tr {
-      border-bottom: 1px solid var(--border);
-    }
+    thead tr { border-bottom: 1px solid var(--border); }
 
     th {
       font-size: 9px;
@@ -372,24 +421,11 @@
     }
 
     tbody tr:last-child td { border-bottom: none; }
-
-    tbody tr {
-      transition: background 0.1s;
-      cursor: pointer;
-    }
-
+    tbody tr { transition: background 0.1s; cursor: pointer; }
     tbody tr:hover { background: var(--surface2); }
 
-    .order-id {
-      font-family: var(--font-mono);
-      color: var(--text);
-      font-size: 12px;
-    }
-
-    .amount {
-      color: var(--green);
-      font-weight: 500;
-    }
+    .order-id { font-family: var(--font-mono); color: var(--text); font-size: 12px; }
+    .amount { color: var(--green); font-weight: 500; }
 
     /* Status badges */
     .badge {
@@ -409,7 +445,6 @@
     .badge-DELIVERED { color: var(--green); border-color: var(--green); background: var(--green-dim); }
     .badge-CANCELLED { color: var(--red); border-color: var(--red); background: var(--red-dim); }
 
-    /* Status select */
     .status-select {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -424,7 +459,7 @@
 
     .status-select:focus { border-color: var(--green); }
 
-    /* Order detail modal */
+    /* Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -433,6 +468,7 @@
       display: none;
       align-items: center;
       justify-content: center;
+      padding: 16px;
     }
 
     .modal-overlay.open { display: flex; }
@@ -440,8 +476,9 @@
     .modal {
       background: var(--surface);
       border: 1px solid var(--border);
-      width: 580px;
-      max-height: 80vh;
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
       overflow-y: auto;
       position: relative;
     }
@@ -462,12 +499,7 @@
       justify-content: space-between;
     }
 
-    .modal-title {
-      font-family: var(--font-serif);
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text);
-    }
+    .modal-title { font-family: var(--font-serif); font-size: 20px; font-weight: 600; color: var(--text); }
 
     .modal-close {
       background: none;
@@ -475,7 +507,7 @@
       color: var(--text-muted);
       font-size: 20px;
       cursor: pointer;
-      padding: 4px;
+      padding: 4px 8px;
       transition: color 0.2s;
     }
 
@@ -489,11 +521,12 @@
       padding: 10px 0;
       border-bottom: 1px solid var(--border);
       font-size: 13px;
+      gap: 12px;
     }
 
     .detail-row:last-child { border-bottom: none; }
-    .detail-key { color: var(--text-muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
-    .detail-val { color: var(--text); text-align: right; max-width: 60%; }
+    .detail-key { color: var(--text-muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+    .detail-val { color: var(--text); text-align: right; max-width: 60%; word-break: break-word; }
 
     .items-list { margin-top: 16px; }
 
@@ -505,23 +538,17 @@
       justify-content: space-between;
       align-items: center;
       font-size: 13px;
+      gap: 8px;
     }
 
     .item-name { color: var(--text); }
     .item-qty { color: var(--text-muted); font-size: 11px; }
-    .item-price { color: var(--green); }
+    .item-price { color: var(--green); flex-shrink: 0; }
 
-    /* Empty state */
-    .empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
-    }
-
+    .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
     .empty-icon { font-size: 40px; margin-bottom: 12px; }
     .empty-text { font-size: 13px; }
 
-    /* Loading */
     .loading {
       text-align: center;
       padding: 60px;
@@ -531,7 +558,6 @@
       text-transform: uppercase;
     }
 
-    /* Toast */
     .toast {
       position: fixed;
       bottom: 32px;
@@ -546,12 +572,12 @@
       opacity: 0;
       transition: all 0.3s;
       pointer-events: none;
+      max-width: calc(100vw - 32px);
     }
 
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.error { border-color: var(--red); color: var(--red); }
 
-    /* Refresh btn */
     .btn-refresh {
       background: transparent;
       border: 1px solid var(--border);
@@ -567,13 +593,70 @@
 
     .btn-refresh:hover { border-color: var(--green); color: var(--green); }
 
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .animate-in { animation: fadeIn 0.3s ease forwards; }
+
+    /* ── Tablet (≤1024px) ── */
+    @media (max-width: 1024px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .main { padding: 32px 24px; }
+      .page-title { font-size: 28px; }
+    }
+
+    /* ── Mobile (≤768px) ── */
+    @media (max-width: 768px) {
+      .mobile-topbar { display: flex; }
+
+      .sidebar {
+        transform: translateX(-100%);
+        padding-top: 16px;
+      }
+
+      .sidebar.open { transform: translateX(0); }
+
+      .main {
+        margin-left: 0;
+        padding: 72px 16px 24px;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .stat-value { font-size: 24px; }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar > div {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .search-bar { width: 100%; flex: 1; }
+
+      .page-title { font-size: 22px; }
+
+      .modal-body { padding: 16px; }
+      .modal-header { padding: 16px 20px; }
+
+      .toast { bottom: 16px; right: 16px; }
+    }
+
+    /* ── Small mobile (≤400px) ── */
+    @media (max-width: 400px) {
+      .stat-card { padding: 14px; }
+      .stat-value { font-size: 20px; }
+      .login-box { padding: 32px 20px; }
+    }
   </style>
 </head>
 <body>
@@ -598,7 +681,17 @@
 
 <!-- DASHBOARD -->
 <div id="dashboard">
-  <nav class="sidebar">
+
+  <!-- Mobile top bar -->
+  <div class="mobile-topbar">
+    <div class="mobile-topbar-logo">Organicles</div>
+    <button class="btn-hamburger" onclick="toggleSidebar()">☰</button>
+  </div>
+
+  <!-- Sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       Organicles
       <span>Admin Panel</span>
@@ -612,7 +705,6 @@
   </nav>
 
   <main class="main">
-    <!-- Orders Page -->
     <div class="page active" id="page-orders">
       <div class="page-header">
         <div>
@@ -621,7 +713,6 @@
         <div class="page-meta" id="last-updated"></div>
       </div>
 
-      <!-- Stats -->
       <div class="stats-row" id="stats-row">
         <div class="stat-card">
           <div class="stat-label">Total Orders</div>
@@ -641,7 +732,6 @@
         </div>
       </div>
 
-      <!-- Toolbar -->
       <div class="toolbar">
         <div class="filters" id="filter-btns">
           <button class="filter-btn active" onclick="setFilter('ALL')">All</button>
@@ -654,7 +744,6 @@
         </div>
       </div>
 
-      <!-- Table -->
       <div class="table-wrap">
         <div class="loading" id="orders-loading">Loading orders...</div>
         <table id="orders-table" style="display:none;">
@@ -681,7 +770,7 @@
   </main>
 </div>
 
-<!-- Order Detail Modal -->
+<!-- Modal -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-header">
@@ -700,6 +789,17 @@
   let token = localStorage.getItem('admin_token') || '';
   let allOrders = [];
   let currentFilter = 'ALL';
+
+  // ── Sidebar (mobile) ──────────────────────────────────────────────────────
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  }
+
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  }
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   async function handleLogin() {
@@ -740,11 +840,8 @@
     loadOrders();
   }
 
-  // Auto-login if token exists
   window.addEventListener('load', () => {
     if (token) showDashboard();
-
-    // Enter key on login
     document.getElementById('password').addEventListener('keydown', e => {
       if (e.key === 'Enter') handleLogin();
     });
@@ -761,16 +858,12 @@
         headers: { 'x-admin-token': token },
       });
       const data = await res.json();
-
       if (!data.success) { showToast('Failed to load orders', true); return; }
-
       allOrders = data.orders || [];
       updateStats();
       renderOrders();
-
       const now = new Date();
-      document.getElementById('last-updated').textContent =
-        `Updated ${now.toLocaleTimeString()}`;
+      document.getElementById('last-updated').textContent = `Updated ${now.toLocaleTimeString()}`;
     } catch (e) {
       showToast('Network error', true);
     } finally {
@@ -782,7 +875,6 @@
     const pending = allOrders.filter(o => o.status === 'PENDING').length;
     const confirmed = allOrders.filter(o => o.status === 'CONFIRMED').length;
     const revenue = allOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-
     document.getElementById('stat-total').textContent = allOrders.length;
     document.getElementById('stat-pending').textContent = pending;
     document.getElementById('stat-confirmed').textContent = confirmed;
@@ -798,11 +890,8 @@
 
   function renderOrders() {
     const search = document.getElementById('search-input').value.toLowerCase();
-
     let orders = allOrders;
-    if (currentFilter !== 'ALL') {
-      orders = orders.filter(o => o.status === currentFilter);
-    }
+    if (currentFilter !== 'ALL') orders = orders.filter(o => o.status === currentFilter);
     if (search) {
       orders = orders.filter(o =>
         o.id.toLowerCase().includes(search) ||
@@ -825,7 +914,6 @@
     orders.forEach((order, i) => {
       let items = [];
       try { items = JSON.parse(order.items); } catch {}
-
       let address = {};
       try { address = JSON.parse(order.shippingAddress); } catch {}
 
@@ -861,7 +949,6 @@
           </select>
         </td>
       `;
-
       tbody.appendChild(tr);
     });
   }
@@ -871,15 +958,11 @@
     try {
       const res = await fetch(`${API}/admin/orders/${orderId}/status`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-token': token,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
         body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
       if (data.success) {
-        // Update local state
         const order = allOrders.find(o => o.id === orderId);
         if (order) order.status = newStatus;
         updateStats();
@@ -899,7 +982,6 @@
   function openModal(order) {
     let items = [];
     try { items = JSON.parse(order.items); } catch {}
-
     let address = {};
     try { address = JSON.parse(order.shippingAddress); } catch {}
 
@@ -908,7 +990,6 @@
       : order.shippingAddress;
 
     document.getElementById('modal-title').textContent = `Order #${order.id.substring(0, 12)}...`;
-
     document.getElementById('modal-body').innerHTML = `
       <div class="detail-row">
         <span class="detail-key">Full ID</span>
@@ -936,7 +1017,6 @@
       </div>
       ${address.phone ? `<div class="detail-row"><span class="detail-key">Customer Phone</span><span class="detail-val">${address.phone}</span></div>` : ''}
       ${address.fullName ? `<div class="detail-row"><span class="detail-key">Customer Name</span><span class="detail-val">${address.fullName}</span></div>` : ''}
-
       <div style="margin-top:20px;margin-bottom:8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);">Items (${items.length})</div>
       <div class="items-list">
         ${items.length === 0 ? '<div style="color:var(--text-muted);font-size:13px;">No items data</div>' :
@@ -951,7 +1031,6 @@
           `).join('')}
       </div>
     `;
-
     document.getElementById('modal-overlay').classList.add('open');
   }
 
@@ -969,6 +1048,7 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(`page-${name}`).classList.add('active');
     event.currentTarget.classList.add('active');
+    closeSidebar();
   }
 
   // ── Toast ─────────────────────────────────────────────────────────────────
@@ -980,7 +1060,6 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
-  // Allow Enter on login
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModalDirect();
   });
