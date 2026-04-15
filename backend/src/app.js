@@ -97,7 +97,7 @@ app.use("/api/uploads", require("./routes/upload.routes"));
 app.use('/api/hero-banners', heroBannerRoutes);
 app.use("/api/users", authLimiter, require("./routes/user.routes"));
 app.use('/api/auth', require('./routes/auth.routes')); 
-const path = require('path');
+// const path = require('path');
 app.use('/admin', express.static(path.join(__dirname, '../dashboard')));
 app.get('/admin*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dashboard', 'index.html'));
