@@ -253,8 +253,8 @@ exports.createOrderAndPayment = async (req, res) => {
 exports.paymentSuccess = async (req, res) => {
   try {
     const { orderId } = req.query;
-    await prisma.payment.updateMany({ where: { orderId: parseInt(orderId) }, data: { status: 'SUCCESS' } });
-    await prisma.order.update({ where: { id: parseInt(orderId) }, data: { status: 'CONFIRMED' } });
+    await prisma.payment.updateMany({ where: { orderId }, data: { status: 'SUCCESS' } });
+    await prisma.order.update({ where: { id: orderId }, data: { status: 'CONFIRMED' } });
     return res.send('<h2>Payment successful! You can close this window.</h2>');
   } catch (err) {
     console.error('Success callback error:', err);
@@ -265,8 +265,8 @@ exports.paymentSuccess = async (req, res) => {
 exports.paymentError = async (req, res) => {
   try {
     const { orderId } = req.query;
-    await prisma.payment.updateMany({ where: { orderId: parseInt(orderId) }, data: { status: 'FAILED' } });
-    await prisma.order.update({ where: { id: parseInt(orderId) }, data: { status: 'PAYMENT_FAILED' } });
+    await prisma.payment.updateMany({ where: { orderId }, data: { status: 'FAILED' } });
+    await prisma.order.update({ where: { id: orderId }, data: { status: 'CANCELLED' } });
     return res.send('<h2>Payment failed. Please try again.</h2>');
   } catch (err) {
     console.error('Error callback error:', err);
@@ -277,7 +277,7 @@ exports.paymentError = async (req, res) => {
 exports.paymentPending = async (req, res) => {
   try {
     const { orderId } = req.query;
-    await prisma.payment.updateMany({ where: { orderId: parseInt(orderId) }, data: { status: 'PENDING' } });
+    await prisma.payment.updateMany({ where: { orderId }, data: { status: 'PENDING' } });
     return res.send('<h2>Payment is pending. We will notify you shortly.</h2>');
   } catch (err) {
     console.error('Pending callback error:', err);
