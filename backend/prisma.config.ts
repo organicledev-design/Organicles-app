@@ -7,8 +7,6 @@ export default defineConfig({
     seed: "node prisma/seed.js",
   },
   datasource: {
-    url: process.env.SQLITE_DB_PATH 
-      ? `file:${process.env.SQLITE_DB_PATH}` 
-      : "file:./prisma/dev.db",
+    url: process.env.DATABASE_URL,
   },
 });
