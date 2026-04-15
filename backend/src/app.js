@@ -94,8 +94,8 @@ app.use('/api/auth', require('./routes/auth.routes'));
 // Admin dashboard
 app.use('/admin', express.static(path.join(__dirname, '../dashboard')));
 // ✅ Fixed wildcard route
-app.get('/admin/*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dashboard', 'index.html'));
+app.get('/admin/:path(*)', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dashboard', 'dashboard_index.html'));
 });
 
 // Global error handler
