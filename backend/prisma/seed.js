@@ -1,7 +1,9 @@
 const { PrismaClient } = require("@prisma/client");
 require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DATABASE_URL } }
+});
 const cloudinaryUrls = {
   "1770968814733-black-pepper.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770968814733-black-pepper_b5zfmf.jpg",
   "1770968814757-brown-sugar.jpg": "https://res.cloudinary.com/dsaavzn5p/image/upload/v1772614977/1770968814757-brown-sugar_om5cix.jpg",
