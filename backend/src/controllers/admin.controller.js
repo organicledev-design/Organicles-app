@@ -39,3 +39,13 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 };
+exports.deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.payment.deleteMany({ where: { orderId: id } });
+    await prisma.order.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+};

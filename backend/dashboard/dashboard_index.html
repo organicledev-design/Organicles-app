@@ -725,6 +725,8 @@
               <th>Payment</th>
               <th>Status</th>
               <th>Update</th>
+              <th>delete</th>
+
             </tr>
           </thead>
           <tbody id="orders-tbody"></tbody>
@@ -937,8 +939,13 @@
             <option value="PENDING" ${order.status === 'PENDING' ? 'selected' : ''}>Pending</option>
             <option value="CONFIRMED" ${order.status === 'CONFIRMED' ? 'selected' : ''}>Confirmed</option>
           </select>
-        </td>
-      `;
+       </td>
+  <td onclick="event.stopPropagation()">
+    <button style="background:transparent;border:1px solid var(--red);color:var(--red);font-family:var(--font-mono);font-size:10px;padding:5px 10px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;" onclick="deleteOrder('${order.id}')">
+      Delete
+    </button>
+  </td>
+`;
       tbody.appendChild(tr);
     });
   }
