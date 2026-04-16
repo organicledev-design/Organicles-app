@@ -23,7 +23,7 @@ import {
 
 // Configure Google Sign-In (call once at app start or here)
 GoogleSignin.configure({
-  webClientId: 'YOUR_WEB_CLIENT_ID_FROM_GOOGLE_CONSOLE', // 🔴 Replace this
+  webClientId: '589213988240-umairpi0tkocddfh3m9fpc9iu12tkpe1.apps.googleusercontent.com', // 🔴 Replace this
 });
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PhoneLogin'>;
