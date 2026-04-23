@@ -1,15 +1,6 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  family: 4, // ✅ force IPv4
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendOrderReceipt({ to, order, items, address }) {
   const itemRows = items.map(item => `
@@ -32,7 +23,6 @@ async function sendOrderReceipt({ to, order, items, address }) {
         <p><strong>Order ID:</strong> ${order.id}</p>
         <p><strong>Payment:</strong> ${order.paymentMethod}</p>
         <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString('en-PK')}</p>
-
         <table style="width:100%;border-collapse:collapse;margin-top:16px;">
           <thead>
             <tr style="background:#f5f5f5;">
@@ -43,11 +33,9 @@ async function sendOrderReceipt({ to, order, items, address }) {
           </thead>
           <tbody>${itemRows}</tbody>
         </table>
-
         <div style="text-align:right;margin-top:16px;font-size:18px;">
           <strong>Total: Rs ${order.totalAmount.toLocaleString()}</strong>
         </div>
-
         <div style="margin-top:24px;padding:16px;background:#f9f9f9;border-radius:8px;">
           <strong>Shipping Address:</strong><br/>
           ${address.fullName}<br/>
@@ -55,7 +43,6 @@ async function sendOrderReceipt({ to, order, items, address }) {
           ${address.city}, ${address.state}<br/>
           Phone: ${address.phone}
         </div>
-
         <p style="margin-top:24px;color:#666;">
           If you have any questions, reply to this email or contact us.
         </p>
@@ -66,8 +53,8 @@ async function sendOrderReceipt({ to, order, items, address }) {
     </div>
   `;
 
-  await transporter.sendMail({
-    from: `"Organicles" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: 'Organicles <onboarding@resend.dev>',
     to,
     subject: `Order Confirmed #${order.id.substring(0, 8)}`,
     html,
