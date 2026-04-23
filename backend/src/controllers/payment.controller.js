@@ -1,6 +1,7 @@
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 const prisma = require('../prisma');
+const { sendOrderReceipt } = require('../utils/sendEmail');
 const crypto = require('crypto');
 
 const DIALOG_BASE_URL = process.env.DIALOG_BASE_URL || 'https://checkout-ms.dev.dialog-pay.com';
@@ -135,6 +136,21 @@ exports.createCODOrder = async (req, res) => {
         paymentMethod: 'COD',
       },
     });
+    // Send receipt email
+const email = shippingAddress.email;
+if (email) {
+  try {
+    await sendOrderReceipt({
+      to: email,
+      order,
+      items,
+      address: shippingAddress,
+    });
+    console.log('Receipt email sent to:', email);
+  } catch (emailErr) {
+    console.error('Email sending failed:', emailErr.message);
+  }
+}
 
     return res.status(201).json({ success: true, data: { order } });
   } catch (err) {
@@ -192,6 +208,21 @@ exports.createOrderAndPayment = async (req, res) => {
 
       return { order, payment };
     });
+    // Send receipt email
+const email = shippingAddress.email;
+if (email) {
+  try {
+    await sendOrderReceipt({
+      to: email,
+      order: result.order,
+      items,
+      address: shippingAddress,
+    });
+    console.log('Receipt email sent to:', email);
+  } catch (emailErr) {
+    console.error('Email sending failed:', emailErr.message);
+  }
+}
 
     const BASE_APP_URL = process.env.APP_URL || 'http://localhost:5000';
 
