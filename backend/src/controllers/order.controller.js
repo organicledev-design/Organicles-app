@@ -58,8 +58,7 @@ exports.createCODOrder = async (req, res) => {
       }
     }
 
-    res.status(201).json({ success: true, order });
-  } catch (err) {
+res.status(201).json({ success: true, data: { order } });  } catch (err) {
     console.error('COD Order error:', err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
