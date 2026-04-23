@@ -8,6 +8,7 @@ import { setProfile } from '../store/slices/authSlice';
 import { userService } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout } from '../store/slices/authSlice';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 
 
@@ -15,10 +16,16 @@ const ProfileScreen = ( { navigation }: any) => {
   const dispatch = useDispatch();
   const profile = useSelector((state: RootState) => state.auth.profile);
   const handleLogout = async () => {
+  try {
+    await GoogleSignin.signOut();
+  } catch (error) {
+    // ignore
+  }
   await AsyncStorage.removeItem('auth_phone');
+  await AsyncStorage.removeItem('auth_google_id');
   dispatch(logout());
   navigation.replace('PhoneLogin');
-  }
+}
   useEffect(() => {
     const fetchLatestProfile = async () => {
       if (!profile?.phone) return;

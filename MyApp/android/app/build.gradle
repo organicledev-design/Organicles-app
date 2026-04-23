@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "com.google.gms.google-services"
 
 
 
@@ -99,13 +100,13 @@ android {
     buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", newArchEnabled
     }
     signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
+    debug {
+        storeFile file(System.getProperty("user.home") + "/.android/debug.keystore")
+        storePassword 'android'
+        keyAlias 'androiddebugkey'
+        keyPassword 'android'
     }
+}
     buildTypes {
         debug {
             signingConfig signingConfigs.debug

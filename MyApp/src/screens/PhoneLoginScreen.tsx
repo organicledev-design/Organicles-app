@@ -21,9 +21,10 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 
-// Configure Google Sign-In (call once at app start or here)
+// Configure Google Sign-In
 GoogleSignin.configure({
-  webClientId: '589213988240-umairpi0tkocddfh3m9fpc9iu12tkpe1.apps.googleusercontent.com', // 🔴 Replace this
+  webClientId: '584520703856-f9taunceqr5hlnfif9lp8vlkpof8li2k.apps.googleusercontent.com',
+  scopes: ['profile', 'email'],
 });
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PhoneLogin'>;
@@ -31,9 +32,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PhoneLogin'>;
 const PhoneLoginScreen = ({ navigation }: Props) => {
   const dispatch = useDispatch();
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [fakeOtp, setFakeOtp] = useState('');
-  const [step, setStep] = useState<'phone' | 'otp' | 'profile'>('phone');
+  const [step, setStep] = useState<'phone' | 'profile'>('phone');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [showDobPicker, setShowDobPicker] = useState(false);
@@ -48,7 +47,6 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
   const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
-
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo.data?.idToken;
@@ -58,7 +56,6 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
         return;
       }
 
-      // Send token to your backend
       const res = await userService.googleAuth(idToken);
 
       if (!res.success) {
@@ -83,6 +80,8 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
       await AsyncStorage.setItem('auth_google_id', user.googleId);
       navigation.replace('Home');
     } catch (error: any) {
+      console.log('GOOGLE_ERROR_CODE:', error.code);
+      console.log('GOOGLE_ERROR_MESSAGE:', error.message);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         // User cancelled - do nothing
       } else if (error.code === statusCodes.IN_PROGRESS) {
@@ -90,69 +89,48 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
         Alert.alert('Error', 'Google Play Services not available');
       } else {
-        Alert.alert('Error', error.message || 'Google login failed');
+        Alert.alert('Error', `Code: ${error.code}\n${error.message}`);
       }
     } finally {
       setGoogleLoading(false);
     }
   };
 
-  // ─── Phone OTP Flow ───────────────────────────────────────────────────────
-  const sendFakeOtp = () => {
-    if (phoneNumber.length < 10) {
-      Alert.alert('Error', 'Please enter a valid phone number');
-      return;
-    }
-
-    const generatedOtp = String(Math.floor(1000 + Math.random() * 9000));
-    setFakeOtp(generatedOtp);
-    setStep('otp');
-
-    Alert.alert(
-      'Demo OTP',
-      `Your OTP is ${generatedOtp}\n\n(This is temporary fake OTP until real SMS is integrated.)`
-    );
-  };
-
-  const verifyFakeOtp = async () => {
-    if (otp.length !== 4) {
-      Alert.alert('Error', 'Please enter 4-digit OTP');
-      return;
-    }
-    if (otp !== fakeOtp) {
-      Alert.alert('Invalid OTP', 'Incorrect code. Please try again.');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const res = await userService.getProfileByPhone(normalizedPhone);
-
-      if (res.success && res.data) {
-        const profile = (res.data as any).user || (res.data as any).profile || res.data;
-
-        dispatch(
-          setProfile({
-            fullName: profile.fullName || '',
-            phone: profile.phone || normalizedPhone,
-            dob: profile.dob || '',
-            email: profile.email || '',
-            city: profile.city || '',
-            address: profile.address || '',
-          })
-        );
-
-        await AsyncStorage.setItem('auth_phone', normalizedPhone);
-        navigation.replace('Home');
+  // ─── Phone Flow (no OTP) ──────────────────────────────────────────────────
+  const handleContinue = async () => {
+    if (step === 'phone') {
+      if (phoneNumber.length < 10) {
+        Alert.alert('Error', 'Please enter a valid phone number');
         return;
       }
-
-      setStep('profile');
-    } catch (e: any) {
-      Alert.alert('Error', e?.message || 'Failed to check profile');
-    } finally {
-      setLoading(false);
+      try {
+        setLoading(true);
+        const res = await userService.getProfileByPhone(normalizedPhone);
+        if (res.success && res.data) {
+          const profile = (res.data as any).user || (res.data as any).profile || res.data;
+          dispatch(
+            setProfile({
+              fullName: profile.fullName || '',
+              phone: profile.phone || normalizedPhone,
+              dob: profile.dob || '',
+              email: profile.email || '',
+              city: profile.city || '',
+              address: profile.address || '',
+            })
+          );
+          await AsyncStorage.setItem('auth_phone', normalizedPhone);
+          navigation.replace('Home');
+          return;
+        }
+        // New user — go to profile setup
+        setStep('profile');
+      } catch (e: any) {
+        Alert.alert('Error', e?.message || 'Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      await completeProfile();
     }
   };
 
@@ -182,7 +160,6 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
         Alert.alert('Error', res.error || 'Failed to save profile');
         return;
       }
-
       const saved = (res.data as any)?.profile || profilePayload;
       dispatch(setProfile(saved));
       await AsyncStorage.setItem('auth_phone', normalizedPhone);
@@ -192,20 +169,8 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
     }
   };
 
-  const handleContinue = async () => {
-    if (step === 'phone') sendFakeOtp();
-    else if (step === 'otp') await verifyFakeOtp();
-    else await completeProfile();
-  };
-
-  const handleResendOtp = () => {
-    setOtp('');
-    sendFakeOtp();
-  };
-
   const handleBack = () => {
-    if (step === 'profile') { setStep('otp'); return; }
-    if (step === 'otp') { setStep('phone'); setOtp(''); return; }
+    if (step === 'profile') { setStep('phone'); return; }
     navigation.goBack();
   };
 
@@ -219,13 +184,11 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
 
       <View style={styles.content}>
         <Text style={styles.title}>
-          {step === 'phone' ? 'Login with Phone' : step === 'otp' ? 'Verify OTP' : 'Complete Profile'}
+          {step === 'phone' ? 'Login with Phone' : 'Complete Profile'}
         </Text>
         <Text style={styles.subtitle}>
           {step === 'phone'
-            ? 'Enter your phone number to receive a verification code'
-            : step === 'otp'
-            ? `Enter the 4-digit code sent to +92 ${phoneNumber}`
+            ? 'Enter your phone number to continue'
             : 'Enter your details to continue'}
         </Text>
 
@@ -240,18 +203,6 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
               value={phoneNumber}
               onChangeText={setPhoneNumber}
               maxLength={10}
-            />
-          </View>
-        ) : step === 'otp' ? (
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.otpInput}
-              placeholder="Enter 4-digit OTP"
-              placeholderTextColor="#999999"
-              keyboardType="number-pad"
-              value={otp}
-              onChangeText={setOtp}
-              maxLength={4}
             />
           </View>
         ) : (
@@ -293,23 +244,11 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
           disabled={loading}
         >
           <Text style={styles.continueButtonText}>
-            {loading
-              ? 'Please wait...'
-              : step === 'phone'
-              ? 'Continue'
-              : step === 'otp'
-              ? 'Verify OTP'
-              : 'Complete & Login'}
+            {loading ? 'Please wait...' : step === 'phone' ? 'Continue' : 'Complete & Login'}
           </Text>
         </TouchableOpacity>
 
-        {step === 'otp' && (
-          <TouchableOpacity onPress={handleResendOtp}>
-            <Text style={styles.resendText}>Resend OTP</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* ── Google Login Button (only on phone step) ── */}
+        {/* Google Login Button — only on phone step */}
         {step === 'phone' && (
           <>
             <View style={styles.dividerContainer}>
@@ -335,9 +274,7 @@ const PhoneLoginScreen = ({ navigation }: Props) => {
         )}
 
         <Text style={styles.disclaimer}>
-          {step === 'otp'
-            ? 'Temporary demo verification is enabled. Replace this with real OTP API later.'
-            : 'We will send you a verification code via SMS. Standard message rates may apply.'}
+          We will send you a verification code via SMS. Standard message rates may apply.
         </Text>
       </View>
 
@@ -392,14 +329,6 @@ const styles = StyleSheet.create({
   },
   countryCode: { fontSize: 18, color: '#333333', marginRight: 12 },
   input: { flex: 1, fontSize: 18, paddingVertical: 16, color: '#333333' },
-  otpInput: {
-    flex: 1,
-    fontSize: 22,
-    letterSpacing: 6,
-    textAlign: 'center',
-    paddingVertical: 16,
-    color: '#333333',
-  },
   continueButton: {
     backgroundColor: '#2E7D32',
     paddingVertical: 16,
@@ -410,7 +339,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   continueButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '500' },
-  resendText: { fontSize: 14, color: '#2E7D32', fontWeight: '600', marginBottom: 12 },
   disclaimer: {
     fontSize: 11,
     color: '#999999',
@@ -419,7 +347,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: 16,
   },
-  // Divider
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -428,7 +355,6 @@ const styles = StyleSheet.create({
   },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#E0E0E0' },
   dividerText: { marginHorizontal: 12, fontSize: 13, color: '#999999' },
-  // Google Button
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
