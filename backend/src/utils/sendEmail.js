@@ -2,7 +2,11 @@ const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function sendOrderReceipt({ to, order, items, address }) {
+async function sendOrderReceipt({ to, order, items, address, paymentMethod }) {
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const deliveryFee = 200;
+  const codTax = paymentMethod === 'COD' ? Math.round(subtotal * 0.04) : 0;
+
   const itemRows = items.map(item => `
     <tr>
       <td style="padding:8px;border-bottom:1px solid #eee;">${item.name}</td>
@@ -23,6 +27,7 @@ async function sendOrderReceipt({ to, order, items, address }) {
         <p><strong>Order ID:</strong> ${order.id}</p>
         <p><strong>Payment:</strong> ${order.paymentMethod}</p>
         <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString('en-PK')}</p>
+
         <table style="width:100%;border-collapse:collapse;margin-top:16px;">
           <thead>
             <tr style="background:#f5f5f5;">
@@ -33,9 +38,27 @@ async function sendOrderReceipt({ to, order, items, address }) {
           </thead>
           <tbody>${itemRows}</tbody>
         </table>
-        <div style="text-align:right;margin-top:16px;font-size:18px;">
-          <strong>Total: Rs ${order.totalAmount.toLocaleString()}</strong>
-        </div>
+
+        <table style="width:100%;margin-top:16px;">
+          <tr>
+            <td style="padding:6px 8px;color:#666;">Subtotal</td>
+            <td style="padding:6px 8px;text-align:right;">Rs ${subtotal.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px;color:#666;">Delivery Fee</td>
+            <td style="padding:6px 8px;text-align:right;">Rs ${deliveryFee.toLocaleString()}</td>
+          </tr>
+          ${codTax > 0 ? `
+          <tr>
+            <td style="padding:6px 8px;color:#666;">COD Tax (4%)</td>
+            <td style="padding:6px 8px;text-align:right;">Rs ${codTax.toLocaleString()}</td>
+          </tr>` : ''}
+          <tr style="border-top:2px solid #eee;">
+            <td style="padding:8px;font-weight:bold;font-size:16px;">Total</td>
+            <td style="padding:8px;text-align:right;font-weight:bold;font-size:16px;">Rs ${order.totalAmount.toLocaleString()}</td>
+          </tr>
+        </table>
+
         <div style="margin-top:24px;padding:16px;background:#f9f9f9;border-radius:8px;">
           <strong>Shipping Address:</strong><br/>
           ${address.fullName}<br/>
@@ -43,6 +66,7 @@ async function sendOrderReceipt({ to, order, items, address }) {
           ${address.city}, ${address.state}<br/>
           Phone: ${address.phone}
         </div>
+
         <p style="margin-top:24px;color:#666;">
           If you have any questions, reply to this email or contact us.
         </p>
