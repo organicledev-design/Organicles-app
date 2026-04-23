@@ -1,4 +1,6 @@
 const prisma = require("../prisma");
+const { sendOrderReceipt } = require("../utils/sendEmail"); // ✅ add this
+
 
 exports.getOrders = async (req, res) => {
   try {
