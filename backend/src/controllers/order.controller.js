@@ -25,16 +25,12 @@ exports.createCODOrder = async (req, res) => {
   try {
     const { orderId, items, shippingAddress, totalAmount } = req.body;
 
-    console.log('Creating COD order with data:', { orderId, items, shippingAddress, totalAmount });
-
     if (!items || !shippingAddress || !totalAmount) {
-      console.log('Missing required fields');
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     const order = await prisma.order.create({
       data: {
-        // id: orderId,
         items: JSON.stringify(items),
         shippingAddress: JSON.stringify(shippingAddress),
         totalAmount,
@@ -43,12 +39,24 @@ exports.createCODOrder = async (req, res) => {
       },
     });
 
-    console.log('COD order created successfully:', order);
+    // Send receipt email
+    const email = shippingAddress.email;
+    if (email) {
+      try {
+        await sendOrderReceipt({
+          to: email,
+          order,
+          items,
+          address: shippingAddress,
+        });
+        console.log('Receipt email sent to:', email);
+      } catch (emailErr) {
+        console.error('Email sending failed:', emailErr.message);
+        // Don't fail the order if email fails
+      }
+    }
 
-    res.status(201).json({
-      success: true,
-      order: order,
-    });
+    res.status(201).json({ success: true, order });
   } catch (err) {
     console.error('COD Order error:', err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
