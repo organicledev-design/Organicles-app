@@ -142,9 +142,11 @@ if (email) {
   try {
     await sendOrderReceipt({
       to: email,
-      order,
+      order : result.order,
       items,
       address: shippingAddress,
+      paymentMethod: paymentMethod, 
+
     });
     console.log('Receipt email sent to:', email);
   } catch (emailErr) {

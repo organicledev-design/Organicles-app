@@ -50,6 +50,8 @@ exports.createCODOrder = async (req, res) => {
           order,
           items,
           address: shippingAddress,
+            paymentMethod: 'COD',  
+
         });
         console.log('Receipt email sent to:', email);
       } catch (emailErr) {
