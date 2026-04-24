@@ -78,7 +78,7 @@ async function sendOrderReceipt({ to, order, items, address, paymentMethod }) {
   `;
 
   await resend.emails.send({
-    from: 'Organicles <onboarding@resend.dev>',
+    from: 'Organicles <orders@organicles.pk>',
     to,
     subject: `Order Confirmed #${order.id.substring(0, 8)}`,
     html,
