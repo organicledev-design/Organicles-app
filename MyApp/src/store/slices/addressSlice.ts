@@ -62,13 +62,18 @@ const addressSlice = createSlice({
       state.selectedAddress = action.payload;
     },
     
+    clearAddresses: (state) => {
+      state.addresses = [];
+      state.selectedAddress = null;
+    },
+
     clearSelectedAddress: (state) => {
       state.selectedAddress = null;
     },
   },
 });
 
-export const {
+export const {clearAddresses,
   hydrateAddresses,
   addAddress,
   updateAddress,

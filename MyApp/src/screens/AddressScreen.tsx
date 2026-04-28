@@ -27,9 +27,9 @@ const AddressScreen = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const { addresses, selectedAddress } = useSelector((state: RootState) => state.address);
-  const ADDRESSES_KEY = 'saved_addresses';
-const SELECTED_ADDRESS_ID_KEY = 'selected_address_id';
+  const profile = useSelector((state: RootState) => state.auth.profile); // ✅ add this
 
+  
 const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 const [hydrated, setHydrated] = useState(false);
 
@@ -46,6 +46,9 @@ const [hydrated, setHydrated] = useState(false);
     zipCode: '',
     isDefault: false,
   });
+  const userKey = profile?.phone || profile?.email || 'guest';
+const ADDRESSES_KEY = `saved_addresses_${userKey}`;
+const SELECTED_ADDRESS_ID_KEY = `selected_address_id_${userKey}`;
 
   const handleSelectAddress = (address: Address) => {
     dispatch(selectAddress(address));

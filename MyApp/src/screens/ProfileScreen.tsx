@@ -9,6 +9,9 @@ import { userService } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout } from '../store/slices/authSlice';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { clearAddresses } from '../store/slices/addressSlice';
+
+
 
 
 
@@ -24,6 +27,7 @@ const ProfileScreen = ( { navigation }: any) => {
   await AsyncStorage.removeItem('auth_phone');
   await AsyncStorage.removeItem('auth_google_id');
   dispatch(logout());
+  dispatch(clearAddresses());
   navigation.replace('PhoneLogin');
 }
   useEffect(() => {
@@ -51,6 +55,8 @@ const ProfileScreen = ( { navigation }: any) => {
   };
 
   const avatarLetter = displayProfile.fullName.charAt(0).toUpperCase();
+ 
+
 
   return (
     <View style={styles.container}>

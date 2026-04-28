@@ -10,102 +10,39 @@ const SplashScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-  const bootstrap = async () => {
-    try {
-      const savedPhone = await AsyncStorage.getItem('auth_phone');
-
-      if (savedPhone) {
-        const res = await userService.getProfileByPhone(savedPhone);
-
-        if (res.success && res.data) {
-          const p: any = (res.data as any).user || (res.data as any).profile || res.data;
-
-          dispatch(
-            setProfile({
+    const bootstrap = async () => {
+      try {
+        // Check phone login
+        const savedPhone = await AsyncStorage.getItem('auth_phone');
+        if (savedPhone) {
+          const res = await userService.getProfileByPhone(savedPhone);
+          if (res.success && res.data) {
+            const p: any = (res.data as any).user || (res.data as any).profile || res.data;
+            dispatch(setProfile({
               fullName: p.fullName || '',
               phone: p.phone || savedPhone,
               dob: p.dob || '',
               email: p.email || '',
-            })
-          );
+            }));
+            navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Home' }] }));
+            return;
+          }
+        }
 
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'Home' }],
-            })
-          );
+        // Check Google login
+        const googleId = await AsyncStorage.getItem('auth_google_id');
+        if (googleId) {
+          navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Home' }] }));
           return;
         }
+
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Welcome' }] }));
+      } catch {
+        navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Welcome' }] }));
       }
-
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Welcome' }],
-        })
-      );
-    } catch {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Welcome' }],
-        })
-      );
-    }
-  };
-
-  bootstrap();
-}, [navigation, dispatch]);
-
- useEffect(() => {
-  const bootstrap = async () => {
-    try {
-      const savedPhone = await AsyncStorage.getItem('auth_phone');
-
-      if (savedPhone) {
-        const res = await userService.getProfileByPhone(savedPhone);
-
-        if (res.success && res.data) {
-          const p: any = (res.data as any).user || (res.data as any).profile || res.data;
-
-          dispatch(
-            setProfile({
-              fullName: p.fullName || '',
-              phone: p.phone || savedPhone,
-              dob: p.dob || '',
-              email: p.email || '',
-            })
-          );
-
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'Home' }],
-            })
-          );
-          return;
-        }
-      }
-
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Welcome' }],
-        })
-      );
-    } catch {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Welcome' }],
-        })
-      );
-    }
-  };
-
-  bootstrap();
-}, [navigation, dispatch]);
+    };
+    bootstrap();
+  }, [navigation, dispatch]);
 
   return (
     <View style={styles.container}>
