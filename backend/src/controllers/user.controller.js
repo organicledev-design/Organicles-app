@@ -3,38 +3,33 @@ const prisma = require("../prisma");
 const normalizePhone = (phone = "") => String(phone).replace(/\s+/g, "").trim();
 
 exports.upsertProfile = async (req, res) => {
+  const phone = normalizePhone(req.body.phone);
+  const fullName = String(req.body.fullName || "").trim();
+  const dob = String(req.body.dob || "").trim();
+  let email = String(req.body.email || "").trim() || null;
+
+  if (!phone || !fullName || !dob) {
+    return res.status(400).json({
+      success: false,
+      message: "phone, fullName and dob are required",
+    });
+  }
+
+  // If email provided, check if it already belongs to another user
+  if (email) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing && existing.phone !== phone) {
+      email = null; // email taken by someone else, save without email
+    }
+  }
+
   try {
-    const phone = normalizePhone(req.body.phone);
-    const fullName = String(req.body.fullName || "").trim();
-    const dob = String(req.body.dob || "").trim();
-    const email = String(req.body.email || "").trim() || null;
-
-    if (!phone || !fullName || !dob) {
-      return res.status(400).json({
-        success: false,
-        message: "phone, fullName and dob are required",
-      });
-    }
-
-    try {
-      const user = await prisma.user.upsert({
-        where: { phone },
-        update: { fullName, dob, email },
-        create: { phone, fullName, dob, email },
-      });
-      return res.status(200).json({ success: true, user });
-    } catch (error) {
-      // Handle duplicate email constraint
-      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-        const user = await prisma.user.upsert({
-          where: { phone },
-          update: { fullName, dob, email: null },
-          create: { phone, fullName, dob, email: null },
-        });
-        return res.status(200).json({ success: true, user });
-      }
-      throw error;
-    }
+    const user = await prisma.user.upsert({
+      where: { phone },
+      update: { fullName, dob, email },
+      create: { phone, fullName, dob, email },
+    });
+    return res.status(200).json({ success: true, user });
   } catch (error) {
     return res.status(500).json({
       success: false,
