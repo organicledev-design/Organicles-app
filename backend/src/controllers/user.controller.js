@@ -7,7 +7,7 @@ exports.upsertProfile = async (req, res) => {
     const phone = normalizePhone(req.body.phone);
     const fullName = String(req.body.fullName || "").trim();
     const dob = String(req.body.dob || "").trim();
-    const email = String(req.body.email || "").trim();
+    const email = String(req.body.email || "").trim() || null;
 
     if (!phone || !fullName || !dob) {
       return res.status(400).json({
@@ -16,22 +16,25 @@ exports.upsertProfile = async (req, res) => {
       });
     }
 
-    const user = await prisma.user.upsert({
-      where: { phone },
-      update: {
-        fullName,
-        dob,
-        email: email || null,
-      },
-      create: {
-        phone,
-        fullName,
-        dob,
-        email: email || null,
-      },
-    });
-
-    return res.status(200).json({ success: true, user });
+    try {
+      const user = await prisma.user.upsert({
+        where: { phone },
+        update: { fullName, dob, email },
+        create: { phone, fullName, dob, email },
+      });
+      return res.status(200).json({ success: true, user });
+    } catch (error) {
+      // Handle duplicate email constraint
+      if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+        const user = await prisma.user.upsert({
+          where: { phone },
+          update: { fullName, dob, email: null },
+          create: { phone, fullName, dob, email: null },
+        });
+        return res.status(200).json({ success: true, user });
+      }
+      throw error;
+    }
   } catch (error) {
     return res.status(500).json({
       success: false,
