@@ -93,7 +93,7 @@ app.use(
 );
 app.use("/api/uploads", require("./routes/upload.routes"));
 app.use('/api/hero-banners', heroBannerRoutes);
-app.use("/api/users", authLimiter, require("./routes/user.routes"));
+app.use("/api/users", require("./routes/user.routes"));
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/settings', require('./routes/settings.routes'));
 
