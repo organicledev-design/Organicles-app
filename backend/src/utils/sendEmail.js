@@ -1,10 +1,12 @@
 const { Resend } = require('resend');
 
+const prisma = require('../prisma');
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendOrderReceipt({ to, order, items, address, paymentMethod }) {
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryFee = 200;
+  const deliveryFee = Number(setting?.value || 200);
   const codTax = paymentMethod === 'COD' ? Math.round(subtotal * 0.04) : 0;
 
   const itemRows = items.map(item => `
